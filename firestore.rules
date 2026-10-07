@@ -1,0 +1,14 @@
+rules_version = '2';
+// Only someone who knows a house code can read or change that house.
+// Nobody can list all houses, so codes can't be discovered.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /houses/{houseId} {
+      allow get, delete: if houseId.size() >= 20;
+      allow create, update: if houseId.size() >= 20
+                            && request.resource.data.json is string
+                            && request.resource.data.json.size() < 900000;
+      allow list: if false;
+    }
+  }
+}

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>B-kini Bottom</title>
+<meta name="theme-color" content="#0F6E74">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="B-kini Bottom">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/logo.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --lagoon: #0F6E74; --lagoon-2: #138A92; --deep: #12324A; --foam: #E6F4F1; --paper: #FFFFFF;
+  --sand: #F4D58D; --sun: #FFD25E; --coral: #E0543F; --coral-soft: #FDE3DE; --kelp: #2F7D4E;
+  --ink: #12324A; --muted: #4F6B7C; --line: #C9E2DE; --card: #FFFFFF; --bg: #E6F4F1;
+  --shadow: 0 1px 0 rgba(18,50,74,.08), 0 6px 18px -10px rgba(18,50,74,.35);
+  --display: "Fredoka", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, sans-serif;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #08202E; --card: #0F2E40; --paper: #0F2E40; --ink: #E5F3F1; --muted: #9DB9C2; --line: #1F4A5E;
+    --foam: #0C2938; --coral-soft: #3A1E1F; --lagoon: #3CC6C0; --kelp: #6ED39A; --coral: #FF8574; }
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; border-radius: 10px; }
+h1, h2, h3, .display { font-family: var(--display); font-weight: 600; letter-spacing: .01em; margin: 0; }
+main { max-width: 640px; margin: 0 auto; padding: 0 16px 120px; }
+
+/* ---------- header with a wave edge ---------- */
+.top { background: linear-gradient(180deg, #138A92 0%, #0F6E74 100%); color: #FFF6E0; position: relative; padding: 14px 16px 34px; margin-top: calc(-1 * env(safe-area-inset-top, 0px)); padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+.top .row { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.top img { width: 40px; height: 40px; border-radius: 11px; }
+.top h1 { font-size: 22px; line-height: 1.1; }
+.top .sub { font-size: 13px; opacity: .85; }
+.top svg.wave { position: absolute; left: 0; bottom: -1px; width: 100%; height: 22px; display: block; }
+.top svg.wave path { fill: var(--bg); }
+
+.hello { margin: 4px 0 18px; }
+.hello h2 { font-size: 28px; }
+.hello p { margin: 2px 0 0; color: var(--muted); }
+
+.section-h { display: flex; align-items: baseline; justify-content: space-between; margin: 26px 2px 10px; }
+.section-h h3 { font-size: 19px; }
+.section-h small { color: var(--muted); }
+
+/* ---------- alarm banners ---------- */
+.alarm { background: var(--coral-soft); border: 2px solid var(--coral); color: var(--ink); border-radius: 16px; padding: 12px 14px; margin: 0 0 10px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; text-align: left; width: 100%; }
+.alarm b { font-family: var(--display); font-weight: 600; font-size: 17px; display: block; }
+.alarm .e { font-size: 24px; line-height: 1; }
+
+/* ---------- my turns: the hero tide pool ---------- */
+.mine { background: var(--sun); color: #12324A; border-radius: 22px; padding: 6px; box-shadow: var(--shadow); }
+.mine .mt { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 16px; background: rgba(255,255,255,.55); margin: 4px 0; }
+.mine .mt:first-child { margin-top: 0; } .mine .mt:last-child { margin-bottom: 0; }
+.mine .mt .e { font-size: 30px; width: 40px; text-align: center; }
+.mine .mt .t { flex: 1; min-width: 0; }
+.mine .mt .t b { font-family: var(--display); font-weight: 600; font-size: 18px; display: block; }
+.mine .mt .t span { font-size: 14px; }
+.clear { background: var(--card); border: 2px dashed var(--line); border-radius: 22px; padding: 18px; text-align: center; color: var(--muted); }
+.clear b { display: block; font-family: var(--display); font-size: 20px; color: var(--ink); font-weight: 600; }
+
+/* ---------- everyone list ---------- */
+.list { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+.item { display: grid; grid-template-columns: 40px 1fr auto; gap: 4px 12px; align-items: center; padding: 14px 14px; border-bottom: 1px solid var(--line); cursor: pointer; width: 100%; background: none; border-left: 0; border-right: 0; border-top: 0; text-align: left; }
+.item:last-child { border-bottom: 0; }
+.item .e { font-size: 26px; text-align: center; grid-row: span 2; }
+.item .n { font-weight: 600; }
+.item .s { font-size: 14px; color: var(--muted); grid-column: 2; }
+.item .who { grid-row: span 2; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); min-width: 56px; }
+.lvl-overdue .s, .lvl-needed .s { color: var(--coral); font-weight: 600; }
+.lvl-due .s { color: var(--lagoon); font-weight: 600; }
+.lvl-paused { opacity: .55; }
+
+.bub { --c: var(--lagoon); width: 36px; height: 36px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--c); color: #fff; font-family: var(--display); font-weight: 600; font-size: 16px; flex: none; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15), inset 0 2px 0 rgba(255,255,255,.35); }
+.bub.big { width: 64px; height: 64px; font-size: 28px; }
+.bub.sm { width: 26px; height: 26px; font-size: 12px; }
+.bub.me { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+/* ---------- buttons ---------- */
+.btn { appearance: none; border: 0; border-radius: 999px; padding: 11px 18px; font-weight: 600; background: var(--lagoon); color: #fff; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn.alt { background: transparent; color: var(--lagoon); box-shadow: inset 0 0 0 2px var(--lagoon); }
+.btn.coral { background: var(--coral); }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+.btn.small { padding: 7px 14px; min-height: 36px; font-size: 14px; }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .5; }
+.mine .btn { background: #12324A; color: #FFF6E0; }
+.stack { display: grid; gap: 10px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- tab bar ---------- */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+nav.tabs button { flex: 1; max-width: 160px; background: none; border: 0; padding: 8px 4px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); cursor: pointer; }
+nav.tabs button .i { font-size: 22px; line-height: 1; filter: grayscale(.6); }
+nav.tabs button[aria-current="page"] { color: var(--lagoon); font-weight: 700; }
+nav.tabs button[aria-current="page"] .i { filter: none; }
+
+/* ---------- sheet ---------- */
+.backdrop { position: fixed; inset: 0; background: rgba(8,32,46,.5); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; border-radius: 26px 26px 0 0; padding: 10px 18px calc(24px + env(safe-area-inset-bottom, 0px)); animation: up .22s ease-out; }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+.grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 12px; }
+.sheet h2 { font-size: 24px; display: flex; align-items: center; gap: 10px; }
+.sheet .close { margin-left: auto; background: var(--card); border: 0; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; }
+
+.rot { display: flex; align-items: flex-end; gap: 10px; overflow-x: auto; padding: 14px 4px 6px; }
+.rot .p { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); min-width: 52px; }
+.rot .p.now { color: var(--ink); font-weight: 700; }
+.rot .arrow { color: var(--line); font-size: 18px; padding-bottom: 22px; }
+
+.panel { background: var(--card); border-radius: 18px; padding: 14px; margin: 12px 0; box-shadow: var(--shadow); }
+.panel h3 { font-size: 17px; margin-bottom: 8px; }
+.note { font-size: 14px; color: var(--muted); margin: 6px 0 0; }
+.callout { background: var(--foam); border-left: 4px solid var(--lagoon); padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+
+/* ---------- forms ---------- */
+label.f { display: grid; gap: 4px; font-size: 14px; font-weight: 600; margin: 12px 0; }
+label.f small { font-weight: 400; color: var(--muted); }
+input[type=text], input[type=number], input[type=date], select, textarea { width: 100%; padding: 11px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--paper); min-height: 44px; font-size: 16px; }
+input:focus, select:focus, textarea:focus { border-color: var(--lagoon); outline: none; }
+.inline { display: flex; gap: 10px; align-items: center; }
+.inline > * { flex: 1; }
+.seg { display: flex; background: var(--card); border-radius: 999px; padding: 4px; gap: 4px; box-shadow: inset 0 0 0 2px var(--line); }
+.seg label { flex: 1; text-align: center; padding: 8px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--lagoon); color: #fff; }
+.seg label:has(input:focus-visible) { outline: 3px solid var(--sun); }
+.check { display: flex; gap: 10px; align-items: center; padding: 8px 0; font-size: 15px; }
+.check input { width: 22px; height: 22px; accent-color: var(--lagoon); }
+.rrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.rrow:last-child { border-bottom: 0; }
+.rrow .nm { flex: 1; }
+.icon-btn { background: var(--foam); border: 0; border-radius: 10px; width: 36px; height: 36px; cursor: pointer; font-size: 16px; }
+
+/* ---------- history ---------- */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; }
+.chip { flex: none; border: 2px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--deep); color: #fff; border-color: var(--deep); }
+.day { font-family: var(--display); font-weight: 500; color: var(--muted); margin: 18px 4px 6px; font-size: 15px; }
+.ev { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.ev:last-child { border-bottom: 0; }
+.ev .tx { flex: 1; font-size: 15px; }
+.ev .tx small { display: block; color: var(--muted); }
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: 70px 1fr 28px; gap: 8px; align-items: center; font-size: 14px; }
+.bar .track { height: 12px; background: var(--foam); border-radius: 6px; overflow: hidden; }
+.bar .fill { height: 100%; border-radius: 6px; }
+
+/* ---------- onboarding ---------- */
+.welcome { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; max-width: 480px; margin: 0 auto; }
+.welcome img { width: 120px; height: 120px; border-radius: 30px; box-shadow: var(--shadow); }
+.welcome h1 { font-size: 40px; margin: 18px 0 4px; line-height: 1.05; }
+.welcome p.lead { color: var(--muted); margin: 0 0 24px; font-size: 17px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom, 0px)); background: var(--deep); color: #fff; padding: 12px 16px; border-radius: 14px; z-index: 20; max-width: 90vw; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow); font-size: 15px; }
+.toast button { background: none; border: 0; color: var(--sun); font-weight: 700; cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+code.k { background: var(--foam); padding: 3px 7px; border-radius: 7px; font-size: 14px; word-break: break-all; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="logic.js"></script>
+<script>
+(function () {
+'use strict';
+// ====================================================================
+//  storage + setup
+// ====================================================================
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const CFG = window.BK_CONFIG || { firebase: {} };
+const HAS_CLOUD = !!(CFG.firebase && CFG.firebase.apiKey && CFG.firebase.projectId);
+const COLORS = ['#0F6E74', '#E0543F', '#7A5AC8', '#B87400', '#2F7D4E', '#C2417F', '#3466B8', '#6B5A45'];
+
+let S = null;                       // house state
+let code = LS.get('bk.code', null); // house code (the secret that links phones)
+let mode = LS.get('bk.mode', null); // 'cloud' | 'demo'
+let me = LS.get('bk.me', null);     // which roommate this phone belongs to
+let view = 'home', logFilter = 'all';
+let fs = null, ref = null, unsub = null, undoState = null, onboarding = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const T = () => BK.today((S && S.house.tz) || CFG.timeZone || 'Asia/Manila');
+const appUrl = () => location.href.split('#')[0].split('?')[0];
+const isStandalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); });
+}
+async function loadFirebase() {
+  if (fs) return;
+  const v = '10.12.2';
+  await loadScript('https://www.gstatic.com/firebasejs/' + v + '/firebase-app-compat.js');
+  await loadScript('https://www.gstatic.com/firebasejs/' + v + '/firebase-firestore-compat.js');
+  firebase.initializeApp(CFG.firebase);
+  fs = firebase.firestore();
+  try { await fs.enablePersistence({ synchronizeTabs: true }); } catch (e) {}
+}
+function newCode() {
+  const a = 'abcdefghjkmnpqrstuvwxyz23456789', b = new Uint32Array(20);
+  crypto.getRandomValues(b);
+  let s = ''; for (let i = 0; i < 20; i++) { s += a[b[i] % a.length]; if (i % 5 === 4 && i < 19) s += '-'; }
+  return s; // e.g. k3fj9-2mqpz-...
+}
+
+// ====================================================================
+//  sync
+// ====================================================================
+async function connect() {
+  if (mode === 'demo') { S = LS.get('bk.demo', null); afterLoad(); return; }
+  const cached = LS.get('bk.cache', null);
+  if (cached) { S = cached; render(); }
+  try { await loadFirebase(); } catch (e) { toast('Offline — showing the last saved copy.'); return; }
+  ref = fs.collection('houses').doc(code);
+  if (unsub) unsub();
+  unsub = ref.onSnapshot(snap => {
+    if (!snap.exists) { if (!snap.metadata.fromCache) { toast('This house no longer exists.'); leave(true); } return; }
+    S = JSON.parse(snap.data().json);
+    LS.set('bk.cache', S);
+    afterLoad();
+  }, err => toast('Sync problem: ' + err.message));
+}
+let housekept = false;
+function afterLoad() {
+  if (!S) return render();
+  if (!housekept) {
+    housekept = true;
+    const copy = JSON.parse(JSON.stringify(S));
+    if (BK.normalize(copy, T())) { mutate(st => { BK.normalize(st, T()); return []; }, { silent: true }); }
+  }
+  render();
+}
+async function mutate(fn, opts) {
+  opts = opts || {};
+  if (!opts.silent) undoState = JSON.stringify(S);
+  let notes = [];
+  if (mode === 'demo') {
+    notes = fn(S) || []; LS.set('bk.demo', S); render();
+  } else {
+    try {
+      await fs.runTransaction(async tx => {
+        const snap = await tx.get(ref);
+        const st = JSON.parse(snap.data().json);
+        notes = fn(st) || [];
+        tx.set(ref, { json: JSON.stringify(st), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      });
+    } catch (e) { toast('Couldn\u2019t save — check your internet and try again.'); return null; }
+  }
+  if (notes.length) notify(notes);
+  if (opts.toast) toast(opts.toast, !opts.silent);
+  return notes;
+}
+async function notify(notes) {
+  if (mode === 'demo') { toast('Demo: would notify ' + notes.map(n => n.to === 'all' ? 'everyone' : BK.memberName(S, n.to)).join(', ')); return; }
+  for (const n of notes) { try { await BK.send(code, n, appUrl()); } catch (e) { console.warn(e); } }
+}
+function undo() {
+  if (!undoState) return;
+  const prev = JSON.parse(undoState); undoState = null;
+  mutate(st => { Object.keys(st).forEach(k => delete st[k]); Object.assign(st, prev); return []; }, { silent: true, toast: 'Undone.' });
+}
+
+// ====================================================================
+//  small UI helpers
+// ====================================================================
+function toast(msg, withUndo) {
+  const r = $('#toast-root');
+  r.innerHTML = '<div class="toast" role="status"><span>' + esc(msg) + '</span>' + (withUndo ? '<button data-act="undo">Undo</button>' : '') + '</div>';
+  clearTimeout(toast.t); toast.t = setTimeout(() => { r.innerHTML = ''; }, withUndo ? 6000 : 3500);
+}
+function bub(id, size) {
+  const m = S && BK.member(S, id);
+  if (!m) return '<span class="bub ' + (size || '') + '" style="--c:#8AA">?</span>';
+  return '<span class="bub ' + (size || '') + (id === me ? ' me' : '') + '" style="--c:' + esc(m.color) + '" aria-hidden="true">' + esc((m.name || '?').trim().charAt(0).toUpperCase()) + '</span>';
+}
+const nm = id => id === me ? 'You' : BK.memberName(S, id);
+const item = task => task.name.replace(/^buy\s+/i, '');
+function fmtDate(d) {
+  if (!d) return '';
+  const t = T(), n = BK.diff(t, d);
+  if (n === 0) return 'Today'; if (n === 1) return 'Yesterday'; if (n === -1) return 'Tomorrow';
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString(undefined, { weekday: n < 7 && n > 0 ? 'long' : undefined, month: 'short', day: 'numeric', year: dt.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined });
+}
+const WAVE = '<svg class="wave" viewBox="0 0 400 22" preserveAspectRatio="none" aria-hidden="true"><path d="M0 12 C40 2 80 22 120 12 C160 2 200 22 240 12 C280 2 320 22 360 12 C380 7 392 9 400 12 V22 H0 Z"/></svg>';
+function urgency(i) { return { needed: 0, overdue: 1, due: 2, soon: 3, ok: 4, paused: 9 }[i.level] * 1000 + (i.daysUntil == null ? 500 : i.daysUntil); }
+function primaryAction(task, i) {
+  if (task.paused) return '';
+  if (task.kind === 'supply') {
+    return task.status === 'needed'
+      ? '<button class="btn small" data-act="done" data-id="' + task.id + '">Bought</button>'
+      : '<button class="btn small alt" data-act="needed" data-id="' + task.id + '">We ran out</button>';
+  }
+  return '<button class="btn small" data-act="done" data-id="' + task.id + '">Done</button>';
+}
+
+// ====================================================================
+//  views
+// ====================================================================
+function render() {
+  const app = $('#app');
+  if (code && mode === 'cloud' && !S) { app.innerHTML = '<div class="welcome"><img src="icons/icon-512.png" alt=""><h1>B-kini Bottom</h1><p class="lead">Loading your house…</p></div>'; return; }
+  if (!S) return renderWelcome();
+  if (!me || !BK.member(S, me)) return renderWhoAmI();
+  const tabs = [['home', '🏝️', 'Turns'], ['log', '📜', 'History'], ['tasks', '🧽', 'Tasks'], ['house', '🏠', 'House']];
+  app.innerHTML =
+    '<header class="top"><div class="row"><img src="icons/icon-192.png" alt=""><div><h1>B-kini Bottom</h1><div class="sub">' + esc(S.house.name) + (mode === 'demo' ? ' (demo on this phone)' : '') + '</div></div></div>' + WAVE + '</header>' +
+    '<main id="main">' + ({ home: viewHome, log: viewLog, tasks: viewTasks, house: viewHouse }[view])() + '</main>' +
+    '<nav class="tabs" aria-label="Sections">' + tabs.map(t => '<button data-act="tab" data-v="' + t[0] + '"' + (view === t[0] ? ' aria-current="page"' : '') + '><span class="i" aria-hidden="true">' + t[1] + '</span>' + t[2] + '</button>').join('') + '</nav>';
+}
+
+function viewHome() {
+  const t = T();
+  const rows = S.tasks.map(task => ({ task, i: BK.info(S, task, t) }));
+  const mine = rows.filter(r => r.i.assignee.memberId === me && !r.task.paused && (r.i.level !== 'ok' || r.task.schedule === 'repeat' || r.task.turnMode === 'period'))
+    .sort((a, b) => urgency(a.i) - urgency(b.i));
+  const urgentMine = mine.filter(r => ['needed', 'overdue', 'due', 'soon'].includes(r.i.level));
+  const alarms = rows.filter(r => r.i.alarm);
+  let h = '';
+  if (!isStandalone() && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    h += '<div class="panel callout" style="margin-top:0">Install this app: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>. Open it from your Home Screen from then on.</div>';
+  }
+  h += '<div class="hello"><h2>Hi, ' + esc(BK.memberName(S, me)) + '</h2><p>' +
+    (urgentMine.length ? (urgentMine.length === 1 ? 'One thing needs you.' : urgentMine.length + ' things need you.') : 'Nothing urgent on you right now.') + '</p></div>';
+  alarms.forEach(r => {
+    const msg = r.task.status === 'needed'
+      ? (r.task.kind === 'supply' ? 'Out of ' + item(r.task) + ' for ' + BK.spanText(r.i.alarmDays) : r.task.name + ' still waiting after ' + BK.spanText(r.i.alarmDays))
+      : r.task.name + ' hasn\u2019t been done for ' + BK.spanText(r.i.sinceBase);
+    h += '<button class="alarm" data-act="open" data-id="' + r.task.id + '"><span class="e" aria-hidden="true">' + esc(r.task.emoji) + '</span><span><b>' + esc(msg) + '</b>' + esc(nm(r.i.assignee.memberId)) + (r.i.assignee.memberId === me ? '\u2019re' : ' is') + ' up.</span></button>';
+  });
+  h += '<div class="section-h"><h3>Your turns</h3></div>';
+  if (mine.length) {
+    h += '<div class="mine">' + mine.map(({ task, i }) =>
+      '<div class="mt"><span class="e" aria-hidden="true">' + esc(task.emoji) + '</span><button class="t" style="background:none;border:0;text-align:left;padding:0;cursor:pointer" data-act="open" data-id="' + task.id + '"><b>' + esc(task.name) + '</b><span>' + esc(i.line) +
+      (i.assignee.reason === 'payback' ? ' · paying back ' + esc(BK.memberName(S, i.assignee.slot)) : '') +
+      (i.assignee.reason === 'skip' ? ' · covering for ' + esc(BK.memberName(S, i.assignee.onBehalfOf)) : '') + '</span></button>' + primaryAction(task, i) + '</div>').join('') + '</div>';
+  } else {
+    h += '<div class="clear"><b>All clear</b>Nothing is waiting on you.</div>';
+  }
+  h += '<div class="section-h"><h3>Everyone</h3><small>' + S.tasks.length + ' tasks</small></div>';
+  if (!S.tasks.length) h += '<div class="clear"><b>No tasks yet</b><button class="btn" style="margin-top:10px" data-act="edit">Add a task</button></div>';
+  else h += '<div class="list">' + rows.sort((a, b) => urgency(a.i) - urgency(b.i)).map(({ task, i }) => {
+    const nx = BK.upcoming(S, task, 2);
+    return '<button class="item lvl-' + i.level + '" data-act="open" data-id="' + task.id + '"><span class="e" aria-hidden="true">' + esc(task.emoji) + '</span>' +
+      '<span class="n">' + esc(task.name) + '</span>' +
+      '<span class="who">' + bub(i.assignee.memberId) + '<span>' + esc(i.assignee.memberId ? nm(i.assignee.memberId) : '—') + '</span></span>' +
+      '<span class="s">' + esc(i.line) + (task.turnMode !== 'period' && nx.length && !task.paused ? ' · then ' + esc(nx.map(nm).join(', ')) : '') + '</span></button>';
+  }).join('') + '</div>';
+  return h;
+}
+
+function logText(e) {
+  const task = S.tasks.find(x => x.id === e.taskId);
+  const tn = task ? task.name.charAt(0).toLowerCase() + task.name.slice(1) : 'a deleted task';
+  const by = nm(e.by), f = e.forMember ? nm(e.forMember) : '';
+  switch (e.type) {
+    case 'done': return by + ' did: ' + tn;
+    case 'bought': return by + ' bought ' + (task ? item(task) : 'supplies');
+    case 'covered': return by + ' covered for ' + f + ': ' + tn + (e.gift ? ' (no payback needed)' : '');
+    case 'skipped': return f + ' passed ' + tn + ' to ' + nm(e.passedTo);
+    case 'needed': return task && task.kind === 'supply' ? by + ' said we ran out of ' + item(task) : by + ' flagged ' + tn;
+    default: return by + ' ' + e.type + ' ' + tn;
+  }
+}
+function viewLog() {
+  const entries = (S.log || []).filter(e => logFilter === 'all' || e.taskId === logFilter);
+  let h = '<div class="section-h" style="margin-top:4px"><h3>History</h3></div>';
+  h += '<div class="chips" role="group" aria-label="Filter by task"><button class="chip" data-act="filter" data-id="all" aria-pressed="' + (logFilter === 'all') + '">All</button>' +
+    S.tasks.map(t => '<button class="chip" data-act="filter" data-id="' + t.id + '" aria-pressed="' + (logFilter === t.id) + '">' + esc(t.emoji + ' ' + t.name) + '</button>').join('') + '</div>';
+
+  const ious = (S.ious || []).filter(x => logFilter === 'all' || x.taskId === logFilter);
+  if (ious.length) {
+    h += '<div class="panel"><h3>Who owes whom</h3>' + ious.map(x => {
+      const task = S.tasks.find(t => t.id === x.taskId);
+      return '<div class="ev" style="padding:8px 0">' + bub(x.debtor, 'sm') + '<div class="tx">' + esc(nm(x.debtor)) + ' ' + (x.debtor === me ? 'owe' : 'owes') + ' ' + esc(nm(x.creditor)) + ' a turn<small>' + esc(task ? task.emoji + ' ' + task.name : '') + ' · since ' + esc(fmtDate(x.date)) + '</small></div></div>';
+    }).join('') + '<p class="note">Paybacks happen automatically: the next time it\u2019s their turn, the person who owes takes it instead.</p></div>';
+  }
+
+  // last 30 days, who did the work
+  const since = BK.addDays(T(), -30), counts = {};
+  (S.log || []).forEach(e => { if ((e.type === 'done' || e.type === 'bought' || e.type === 'covered') && e.date >= since && (logFilter === 'all' || e.taskId === logFilter)) counts[e.by] = (counts[e.by] || 0) + 1; });
+  const max = Math.max(1, ...Object.values(counts));
+  h += '<div class="panel"><h3>Last 30 days</h3><div class="bars">' + S.members.filter(m => m.active !== false).map(m =>
+    '<div class="bar"><span>' + esc(m.id === me ? 'You' : m.name) + '</span><span class="track"><span class="fill" style="display:block;width:' + ((counts[m.id] || 0) / max * 100) + '%;background:' + esc(m.color) + '"></span></span><b>' + (counts[m.id] || 0) + '</b></div>').join('') + '</div></div>';
+
+  if (!entries.length) return h + '<div class="clear"><b>Nothing logged yet</b>Finished tasks, skips and "we ran out" flags show up here.</div>';
+  let lastDay = null, body = '';
+  entries.slice(0, 300).forEach(e => {
+    if (e.date !== lastDay) { if (lastDay) body += '</div>'; body += '<div class="day">' + esc(fmtDate(e.date)) + '</div><div class="list">'; lastDay = e.date; }
+    const task = S.tasks.find(x => x.id === e.taskId);
+    body += '<div class="ev"><span aria-hidden="true" style="font-size:22px">' + esc(task ? task.emoji : '•') + '</span><div class="tx">' + esc(logText(e)) + (e.note ? '<small>\u201c' + esc(e.note) + '\u201d</small>' : '') + '</div>' + bub(e.by, 'sm') + '</div>';
+  });
+  return h + body + '</div>';
+}
+
+function viewTasks() {
+  let h = '<div class="section-h" style="margin-top:4px"><h3>Tasks</h3><button class="btn small" data-act="edit">Add a task</button></div>';
+  if (!S.tasks.length) return h + '<div class="clear"><b>No tasks yet</b>Add chores like cleaning the bathroom, or supplies like trash bags.</div>';
+  h += '<div class="list">' + S.tasks.map(task => {
+    const sched = task.schedule === 'repeat' ? 'Every ' + BK.spanText(task.everyDays) : (task.kind === 'supply' ? 'When we run out' : 'When needed');
+    const turns = task.turnMode === 'period' ? ', same person for ' + BK.spanText(task.periodDays) : ', rotates each time';
+    return '<button class="item" data-act="edit" data-id="' + task.id + '"><span class="e" aria-hidden="true">' + esc(task.emoji) + '</span><span class="n">' + esc(task.name) + (task.paused ? ' (paused)' : '') + '</span>' +
+      '<span class="who" style="flex-direction:row;gap:0">' + task.rotation.map(id => bub(id, 'sm')).join('') + '</span><span class="s">' + esc(sched + turns) + '</span></button>';
+  }).join('') + '</div>';
+  return h;
+}
+
+function viewHouse() {
+  const meM = BK.member(S, me);
+  let h = '<div class="section-h" style="margin-top:4px"><h3>House</h3></div>';
+  h += '<div class="panel"><h3>This phone belongs to</h3><select id="whoami" aria-label="Who are you">' + S.members.map(m => '<option value="' + m.id + '"' + (m.id === me ? ' selected' : '') + '>' + esc(m.name) + '</option>').join('') + '</select></div>';
+
+  h += '<div class="panel"><h3>Roommates</h3>' + S.members.map(m =>
+    '<div class="rrow">' + bub(m.id) + '<span class="nm">' + esc(m.name) + (m.active === false ? ' <small style="color:var(--muted)">(away — skipped in rotations)</small>' : '') + '</span><button class="btn small ghost" data-act="member" data-id="' + m.id + '">Edit</button></div>').join('') +
+    '<button class="btn small alt" style="margin-top:10px" data-act="member">Add a roommate</button></div>';
+
+  h += '<div class="panel"><h3>Notifications on this phone</h3>';
+  if (mode === 'demo') h += '<p class="note">Demo mode doesn\u2019t send notifications. Set up the shared version (see SETUP.md) to get them.</p>';
+  else h += '<p class="note" style="margin-top:0">Notifications come through the free <b>ntfy</b> app. In ntfy, tap <b>+</b>, paste each code below, and tap <b>Subscribe</b>.</p>' +
+    '<label class="f">Just for you (' + esc(meM.name) + ')<div class="inline"><code class="k">' + esc(BK.topic(code, me)) + '</code><button class="btn small ghost" style="flex:none" data-act="copy" data-v="' + esc(BK.topic(code, me)) + '">Copy</button></div></label>' +
+    '<label class="f">Whole-house alerts<div class="inline"><code class="k">' + esc(BK.topic(code, 'all')) + '</code><button class="btn small ghost" style="flex:none" data-act="copy" data-v="' + esc(BK.topic(code, 'all')) + '">Copy</button></div></label>' +
+    '<button class="btn small" data-act="test">Send me a test</button>';
+  h += '</div>';
+
+  if (mode !== 'demo') h += '<div class="panel"><h3>House code</h3><p class="note" style="margin-top:0">Roommates join with this code. Treat it like a password — anyone with it can see and change your house.</p><div class="inline" style="margin-top:8px"><code class="k">' + esc(code) + '</code><button class="btn small ghost" style="flex:none" data-act="share">Share</button></div></div>';
+
+  h += '<div class="panel"><h3>Settings</h3><label class="f">House name<input type="text" id="hname" value="' + esc(S.house.name) + '"></label>' +
+    '<label class="f">Time zone<small>Used for due dates and the daily reminder.</small><input type="text" id="htz" value="' + esc(S.house.tz) + '"></label><button class="btn small" data-act="savehouse">Save settings</button></div>';
+
+  h += '<div class="panel"><h3>Your data</h3><p class="note" style="margin-top:0">Everything is stored only in your own Firebase project. No ads, no tracking.</p><div class="btns" style="margin-top:10px">' +
+    '<button class="btn small ghost" data-act="export">Export a backup</button>' +
+    '<button class="btn small ghost" data-act="leave">Sign this phone out</button>' +
+    '<button class="btn small coral" data-act="wipe">Delete house and all data</button></div></div>';
+  return h;
+}
+
+// ---------- onboarding ----------
+function renderWelcome() {
+  const app = $('#app');
+  const o = onboarding || { step: 'start' };
+  let h = '<div class="welcome"><img src="icons/icon-512.png" alt="B-kini Bottom logo">';
+  if (o.step === 'start') {
+    h += '<h1>B-kini Bottom</h1><p class="lead">Whose turn is it? Chores and supplies for Room B, kept fair.</p><div class="stack">';
+    if (HAS_CLOUD) h += '<button class="btn block" data-act="ob" data-v="create">Create our house</button><button class="btn block alt" data-act="ob" data-v="join">Join with a house code</button><button class="btn block ghost" data-act="ob" data-v="demo">Try a demo on this phone</button>';
+    else h += '<div class="callout">Sharing between phones isn\u2019t set up yet. Follow SETUP.md to add your Firebase settings to <b>config.js</b>.</div><button class="btn block" data-act="ob" data-v="demo">Try a demo on this phone</button>';
+    h += '</div>';
+  } else if (o.step === 'create') {
+    h += '<h1>Set up the house</h1><p class="lead">Add everyone who lives here. You can change this later.</p>' +
+      '<label class="f">House name<input type="text" id="ob-name" value="' + esc(o.name || 'Room B') + '"></label>' +
+      '<div class="f" style="font-weight:600;font-size:14px">Roommates</div>' +
+      o.people.map((p, i) => '<div class="inline" style="margin-bottom:8px"><input type="text" class="ob-p" aria-label="Roommate ' + (i + 1) + '" placeholder="Name" value="' + esc(p) + '"><button class="icon-btn" style="flex:none" data-act="ob-del" data-i="' + i + '" aria-label="Remove">✕</button></div>').join('') +
+      '<button class="btn small alt" data-act="ob-add">Add a roommate</button>' +
+      '<div class="f" style="font-weight:600;font-size:14px;margin-top:20px">Start with these tasks</div>' +
+      BK.STARTERS.map((s, i) => '<label class="check"><input type="checkbox" class="ob-s" value="' + i + '"' + (o.starters[i] ? ' checked' : '') + '> ' + esc(s.emoji + ' ' + s.name) + '</label>').join('') +
+      '<div class="stack" style="margin-top:16px"><button class="btn block" data-act="ob-create">Create house</button><button class="btn block ghost" data-act="ob" data-v="start">Back</button></div>';
+  } else if (o.step === 'join') {
+    h += '<h1>Join your house</h1><p class="lead">Ask whoever set it up for the house code (it\u2019s under House in their app).</p>' +
+      '<label class="f">House code<input type="text" id="ob-code" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="xxxxx-xxxxx-xxxxx-xxxxx"></label>' +
+      '<div class="stack"><button class="btn block" data-act="ob-join">Join</button><button class="btn block ghost" data-act="ob" data-v="start">Back</button></div>';
+  }
+  app.innerHTML = h + '</div>';
+}
+function renderWhoAmI() {
+  $('#app').innerHTML = '<div class="welcome"><img src="icons/icon-512.png" alt=""><h1>Who are you?</h1><p class="lead">Pick your name so your turns and notifications are yours.</p><div class="stack">' +
+    S.members.map(m => '<button class="btn block ghost" style="justify-content:flex-start;gap:12px" data-act="iam" data-id="' + m.id + '">' + bub(m.id) + esc(m.name) + '</button>').join('') + '</div></div>';
+}
+function pullOnboarding() {
+  const o = onboarding; if (!o || o.step !== 'create') return;
+  o.name = $('#ob-name').value;
+  o.people = [...document.querySelectorAll('.ob-p')].map(i => i.value);
+  o.starters = BK.STARTERS.map((_, i) => !!document.querySelector('.ob-s[value="' + i + '"]:checked'));
+}
+async function createHouse() {
+  pullOnboarding();
+  const o = onboarding;
+  const names = o.people.map(s => s.trim()).filter(Boolean);
+  if (names.length < 1) return toast('Add at least one roommate.');
+  const tz = CFG.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Manila';
+  const st = { version: 1, house: { name: o.name.trim() || 'Room B', tz }, members: names.map((n, i) => ({ id: BK.uid(), name: n, color: COLORS[i % COLORS.length], active: true })), tasks: [], log: [], ious: [] };
+  BK.STARTERS.forEach((s, i) => { if (o.starters[i]) st.tasks.push(BK.newTask(st, Object.assign({}, s, { ptr: st.tasks.length % names.length }))); });
+  if (o.demo) {
+    mode = 'demo'; LS.set('bk.mode', mode); S = st; LS.set('bk.demo', S); onboarding = null; render(); return;
+  }
+  try {
+    await loadFirebase();
+    code = newCode();
+    await fs.collection('houses').doc(code).set({ json: JSON.stringify(st), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  } catch (e) { code = null; return toast('Couldn\u2019t create the house: ' + e.message); }
+  mode = 'cloud'; LS.set('bk.mode', mode); LS.set('bk.code', code); onboarding = null;
+  connect();
+}
+async function joinHouse() {
+  const c = $('#ob-code').value.trim().toLowerCase();
+  if (c.length < 20) return toast('That code looks too short. Copy it exactly.');
+  try {
+    await loadFirebase();
+    const snap = await fs.collection('houses').doc(c).get();
+    if (!snap.exists) return toast('No house found with that code.');
+  } catch (e) { return toast('Couldn\u2019t check the code: ' + e.message); }
+  code = c; mode = 'cloud'; LS.set('bk.code', code); LS.set('bk.mode', mode); onboarding = null;
+  connect();
+}
+function leave(silent) {
+  if (!silent && !confirm('Sign this phone out of the house? The house and its data stay; you can rejoin with the house code.')) return;
+  if (unsub) unsub();
+  ['bk.code', 'bk.mode', 'bk.me', 'bk.cache'].forEach(LS.del);
+  code = null; mode = null; me = null; S = null; view = 'home'; onboarding = null; housekept = false;
+  render();
+}
+
+// ====================================================================
+//  sheets
+// ====================================================================
+function openSheet(html) {
+  $('#sheet-root').innerHTML = '<div class="backdrop" data-act="backdrop"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>' + html + '</div></div>';
+  const f = $('#sheet-root .sheet [autofocus]') || $('#sheet-root .sheet button'); if (f) f.focus();
+}
+function closeSheet() { $('#sheet-root').innerHTML = ''; }
+const sheetHead = (title) => '<h2>' + title + '<button class="close" data-act="close" aria-label="Close">✕</button></h2>';
+
+function sheetTask(id) {
+  const task = S.tasks.find(t => t.id === id); if (!task) return closeSheet();
+  const t = T(), i = BK.info(S, task, t), a = i.assignee;
+  const responsible = a.onBehalfOf || a.memberId;
+  let h = sheetHead('<span aria-hidden="true">' + esc(task.emoji) + '</span>' + esc(task.name));
+  h += '<p class="note" style="margin-top:2px">' + esc(i.line) + (task.lastDone ? ' · last done ' + esc(fmtDate(task.lastDone).toLowerCase()) + ' by ' + esc(nm(task.lastDoneBy)) : ' · never done yet') + '</p>';
+
+  // rotation strip
+  const rot = BK.activeRotation(S, task);
+  const slot = BK.slotMember(S, task);
+  if (rot.length) {
+    const start = Math.max(0, rot.indexOf(slot));
+    const ordered = rot.slice(start).concat(rot.slice(0, start));
+    h += '<div class="rot" aria-label="Turn order">' + ordered.map((id, k) =>
+      (k ? '<span class="arrow" aria-hidden="true">›</span>' : '') + '<span class="p' + (id === a.memberId || (k === 0 && !a.memberId) ? ' now' : '') + '">' + bub(id, id === a.memberId ? 'big' : '') + esc(nm(id)) + '</span>').join('') + '</div>';
+  }
+  if (a.reason === 'payback') h += '<div class="callout">' + esc(nm(a.memberId)) + ' is taking ' + esc(nm(a.slot)) + '\u2019s turn to pay back a covered turn.</div>';
+  if (a.reason === 'skip') h += '<div class="callout">' + esc(nm(responsible)) + ' passed this turn to ' + esc(nm(a.memberId)) + '.</div>';
+  if (task.turnMode === 'period') h += '<p class="note">' + esc(nm(a.memberId)) + ' ' + (a.memberId === me ? 'are' : 'is') + ' on duty until ' + esc(fmtDate(BK.addDays(task.periodStart, task.periodDays - 1))) + '.</p>';
+
+  // actions
+  h += '<div class="stack" style="margin-top:16px">';
+  if (!task.paused) {
+    const doneLabel = task.kind === 'supply' ? 'I bought it' : 'I did it';
+    h += '<button class="btn block" data-act="done" data-id="' + task.id + '">' + doneLabel + (responsible && responsible !== me ? ' (covering for ' + esc(nm(responsible)) + ')' : '') + '</button>';
+    h += '<button class="btn block alt" data-act="doneother" data-id="' + task.id + '">Someone else did it…</button>';
+    if (task.status !== 'needed') h += '<button class="btn block alt" data-act="needed" data-id="' + task.id + '">' + (task.kind === 'supply' ? 'We ran out' : 'It needs doing now') + '</button>';
+    if (responsible && rot.length > 1) h += '<button class="btn block ghost" data-act="skip" data-id="' + task.id + '">' + (responsible === me ? 'Pass my turn to the next person' : 'Pass ' + esc(nm(responsible)) + '\u2019s turn to the next person') + '</button>';
+    if (a.memberId && a.memberId !== me && mode !== 'demo') h += '<button class="btn block ghost" data-act="nudge" data-id="' + task.id + '">Nudge ' + esc(nm(a.memberId)) + '</button>';
+  }
+  h += '<button class="btn block ghost" data-act="edit" data-id="' + task.id + '">Edit task</button></div>';
+
+  const ious = (S.ious || []).filter(x => x.taskId === task.id);
+  if (ious.length) h += '<div class="panel"><h3>Turns owed</h3>' + ious.map(x => '<p style="margin:4px 0">' + esc(nm(x.debtor)) + ' ' + (x.debtor === me ? 'owe' : 'owes') + ' ' + esc(nm(x.creditor)) + ' a turn</p>').join('') + '</div>';
+
+  const hist = (S.log || []).filter(e => e.taskId === task.id).slice(0, 10);
+  h += '<div class="panel"><h3>Recent</h3>' + (hist.length ? hist.map(e => '<div class="ev" style="padding:8px 0">' + bub(e.by, 'sm') + '<div class="tx">' + esc(logText(e)) + '<small>' + esc(fmtDate(e.date)) + (e.note ? ' · \u201c' + esc(e.note) + '\u201d' : '') + '</small></div></div>').join('') : '<p class="note">Nothing yet.</p>') + '</div>';
+  openSheet(h);
+}
+
+function sheetDone(id) {
+  const task = S.tasks.find(t => t.id === id);
+  const a = BK.assignee(S, task), responsible = a.onBehalfOf || a.memberId;
+  let h = sheetHead('Who did it?');
+  const def = responsible && responsible !== me ? responsible : ((S.members.find(m => m.id !== me && m.active !== false) || {}).id || me);
+  h += '<label class="f">Done by<select id="d-by">' + S.members.map(m => '<option value="' + m.id + '"' + (m.id === def ? ' selected' : '') + '>' + esc(m.name) + '</option>').join('') + '</select></label>' +
+    '<label class="f">When<input type="date" id="d-date" value="' + T() + '" max="' + T() + '"></label>' +
+    '<label class="check" id="d-giftrow"><input type="checkbox" id="d-gift"> No payback needed (a favor, not a swap)</label>' +
+    '<label class="f">Note <small>optional</small><input type="text" id="d-note" placeholder="e.g. bought the big pack"></label>' +
+    '<p class="note">It was ' + esc(nm(responsible)) + '\u2019s turn. If someone else did it, ' + esc(nm(responsible)) + ' takes their next turn instead — unless you tick "no payback".</p>' +
+    '<button class="btn block" style="margin-top:12px" data-act="savedone" data-id="' + id + '">Save</button>';
+  openSheet(h);
+}
+
+let draft = null;
+function sheetEdit(id) {
+  const existing = id && S.tasks.find(t => t.id === id);
+  draft = existing ? JSON.parse(JSON.stringify(existing)) : BK.newTask(S, {});
+  draft._new = !existing;
+  if (draft._new) draft.name = '';
+  renderEdit();
+}
+function renderEdit() {
+  const d = draft;
+  const inRot = id => d.rotation.includes(id);
+  const others = S.members.filter(m => !inRot(m.id));
+  let h = sheetHead(d._new ? 'New task' : 'Edit task');
+  h += '<div class="inline"><label class="f" style="flex:0 0 80px">Emoji<input type="text" id="e-emoji" value="' + esc(d.emoji) + '" maxlength="4" style="text-align:center;font-size:22px"></label>' +
+    '<label class="f">Name<input type="text" id="e-name" value="' + esc(d.name) + '" placeholder="e.g. Clean the bathroom" autofocus></label></div>';
+  h += '<div class="seg" role="radiogroup" aria-label="Kind"><label><input type="radio" name="e-kind" value="chore"' + (d.kind === 'chore' ? ' checked' : '') + '>Chore</label><label><input type="radio" name="e-kind" value="supply"' + (d.kind === 'supply' ? ' checked' : '') + '>Something to buy</label></div>';
+
+  h += '<div class="panel"><h3>When</h3><div class="seg" role="radiogroup" aria-label="Schedule"><label><input type="radio" name="e-sched" value="repeat"' + (d.schedule === 'repeat' ? ' checked' : '') + ' data-act="e-redraw">On a schedule</label><label><input type="radio" name="e-sched" value="asNeeded"' + (d.schedule !== 'repeat' ? ' checked' : '') + ' data-act="e-redraw">Only when needed</label></div>';
+  if (d.schedule === 'repeat') h += '<div class="inline"><label class="f">Repeats every (days)<input type="number" id="e-every" min="1" value="' + d.everyDays + '"></label><label class="f">Next due<input type="date" id="e-next" value="' + esc(BK.dueDate(Object.assign({}, d, { status: 'ok' })) || T()) + '"></label></div>';
+  else h += '<p class="note">Anyone can tap "' + (d.kind === 'supply' ? 'We ran out' : 'It needs doing now') + '" and the person whose turn it is gets notified.</p>';
+  h += '</div>';
+
+  h += '<div class="panel"><h3>Turns</h3><div class="seg" role="radiogroup" aria-label="How turns work"><label><input type="radio" name="e-mode" value="each"' + (d.turnMode !== 'period' ? ' checked' : '') + ' data-act="e-redraw">Next person after each time</label><label><input type="radio" name="e-mode" value="period"' + (d.turnMode === 'period' ? ' checked' : '') + ' data-act="e-redraw">Same person for a stretch</label></div>';
+  if (d.turnMode === 'period') h += '<div class="inline"><label class="f">Stretch length (days)<input type="number" id="e-pdays" min="1" value="' + d.periodDays + '"></label><label class="f">This stretch began<input type="date" id="e-pstart" value="' + esc(d.periodStart || T()) + '"></label></div>';
+  h += '<div class="f" style="font-weight:600;font-size:14px;margin-bottom:0">Order <small style="font-weight:400;color:var(--muted)">— the person marked ★ is up now</small></div>';
+  h += d.rotation.map((id, k) => '<div class="rrow">' + bub(id, 'sm') + '<span class="nm">' + esc(BK.memberName(S, id)) + '</span>' +
+    '<button class="icon-btn" data-act="e-cur" data-i="' + k + '" aria-label="Make it ' + esc(BK.memberName(S, id)) + '\u2019s turn now" aria-pressed="' + (d.ptr === k) + '">' + (d.ptr === k ? '★' : '☆') + '</button>' +
+    '<button class="icon-btn" data-act="e-up" data-i="' + k + '" aria-label="Move up">↑</button><button class="icon-btn" data-act="e-down" data-i="' + k + '" aria-label="Move down">↓</button><button class="icon-btn" data-act="e-rm" data-i="' + k + '" aria-label="Remove from this task">✕</button></div>').join('');
+  if (others.length) h += '<div class="btns" style="margin-top:8px">' + others.map(m => '<button class="btn small ghost" data-act="e-add" data-id="' + m.id + '">+ ' + esc(m.name) + '</button>').join('') + '</div>';
+  h += '</div>';
+
+  h += '<div class="panel"><h3>Reminders</h3><div class="inline"><label class="f">Remind again every (days)<small>while overdue or out</small><input type="number" id="e-nag" min="1" value="' + d.nagEveryDays + '"></label>' +
+    '<label class="f">Warn everyone after (days)<small>0 = never</small><input type="number" id="e-alert" min="0" value="' + d.alertAfterDays + '"></label></div>' +
+    '<p class="note">Example: warn after 14 sends "' + esc(d.name || 'This task') + ' hasn\u2019t been done for 2 weeks" to the whole house.</p></div>';
+  h += '<label class="check"><input type="checkbox" id="e-paused"' + (d.paused ? ' checked' : '') + '> Pause this task (e.g. during semester break)</label>';
+  h += '<div class="stack" style="margin-top:12px"><button class="btn block" data-act="e-save">' + (d._new ? 'Add task' : 'Save changes') + '</button>' + (d._new ? '' : '<button class="btn block coral" data-act="e-delete">Delete task</button>') + '</div>';
+  openSheet(h);
+}
+function pullDraft() {
+  const d = draft, v = s => { const el = $(s); return el ? el.value : null; }, n = (s, def) => { const x = parseInt(v(s), 10); return isNaN(x) ? def : x; };
+  d.emoji = (v('#e-emoji') || '✨').trim() || '✨';
+  d.name = v('#e-name') || '';
+  const r = name => { const el = document.querySelector('input[name="' + name + '"]:checked'); return el && el.value; };
+  d.kind = r('e-kind') || d.kind;
+  d.schedule = r('e-sched') || d.schedule;
+  d.turnMode = r('e-mode') || d.turnMode;
+  if ($('#e-every')) d.everyDays = Math.max(1, n('#e-every', 7));
+  if ($('#e-next')) d.nextDue = v('#e-next') || d.nextDue;
+  if ($('#e-pdays')) d.periodDays = Math.max(1, n('#e-pdays', 7));
+  if ($('#e-pstart')) d.periodStart = v('#e-pstart') || d.periodStart;
+  d.nagEveryDays = Math.max(1, n('#e-nag', 2));
+  d.alertAfterDays = Math.max(0, n('#e-alert', 0));
+  d.paused = !!($('#e-paused') && $('#e-paused').checked);
+}
+function saveDraft() {
+  pullDraft();
+  const d = draft;
+  if (!d.name.trim()) return toast('Give the task a name.');
+  if (!d.rotation.length) return toast('Add at least one person to the turn order.');
+  const isNew = d._new; delete d._new;
+  const orig = !isNew && S.tasks.find(t => t.id === d.id);
+  if (orig && (orig.ptr !== d.ptr || JSON.stringify(orig.rotation) !== JSON.stringify(d.rotation))) d.override = null;
+  d.name = d.name.trim();
+  const copy = JSON.parse(JSON.stringify(d));
+  closeSheet();
+  mutate(st => {
+    const k = st.tasks.findIndex(t => t.id === copy.id);
+    if (k >= 0) st.tasks[k] = Object.assign(st.tasks[k], copy); else st.tasks.push(copy);
+    BK.normalize(st, T());
+    return [];
+  }, { toast: isNew ? 'Task added.' : 'Changes saved.' });
+}
+
+function sheetMember(id) {
+  const m = id ? BK.member(S, id) : null;
+  let h = sheetHead(m ? 'Edit roommate' : 'Add a roommate');
+  h += '<label class="f">Name<input type="text" id="m-name" value="' + esc(m ? m.name : '') + '" autofocus></label>' +
+    '<div class="f" style="font-weight:600;font-size:14px">Color</div><div class="btns" role="radiogroup" aria-label="Color">' + COLORS.map(c => '<label style="cursor:pointer"><input type="radio" name="m-color" value="' + c + '" class="sr"' + ((m ? m.color : COLORS[S.members.length % COLORS.length]) === c ? ' checked' : '') + '><span class="bub" style="--c:' + c + '">' + ((m ? m.color : COLORS[S.members.length % COLORS.length]) === c ? '✓' : '') + '</span></label>').join('') + '</div>';
+  if (m) h += '<label class="check"><input type="checkbox" id="m-away"' + (m.active === false ? ' checked' : '') + '> Away for now (skip them in every rotation)</label>';
+  if (!m) h += '<label class="check"><input type="checkbox" id="m-addall" checked> Add them to every task\u2019s turn order</label>';
+  h += '<div class="stack" style="margin-top:12px"><button class="btn block" data-act="m-save" data-id="' + (m ? m.id : '') + '">' + (m ? 'Save changes' : 'Add roommate') + '</button>' +
+    (m ? '<button class="btn block coral" data-act="m-remove" data-id="' + m.id + '">Remove from the house</button>' : '') + '</div>';
+  openSheet(h);
+}
+
+// ====================================================================
+//  actions
+// ====================================================================
+const A = {
+  tab(d) { view = d.v; render(); window.scrollTo(0, 0); },
+  open(d) { sheetTask(d.id); },
+  close() { closeSheet(); },
+  backdrop(d, el, e) { if (e.target === el) closeSheet(); },
+  undo() { $('#toast-root').innerHTML = ''; undo(); },
+  filter(d) { logFilter = d.id; render(); },
+  done(d) {
+    const task = S.tasks.find(t => t.id === d.id);
+    closeSheet();
+    mutate(st => BK.complete(st, d.id, me, {}), { toast: (task.kind === 'supply' ? 'Marked as bought: ' : 'Done: ') + task.name });
+  },
+  doneother(d) { sheetDone(d.id); },
+  savedone(d) {
+    const by = $('#d-by').value, date = $('#d-date').value || T(), gift = $('#d-gift').checked, note = $('#d-note').value.trim();
+    if (date > T()) return toast('That date is in the future.');
+    closeSheet();
+    mutate(st => BK.complete(st, d.id, by, { date, gift, note }), { toast: 'Saved: ' + BK.memberName(S, by) + ' did it.' });
+  },
+  needed(d) {
+    const task = S.tasks.find(t => t.id === d.id);
+    closeSheet();
+    mutate(st => BK.markNeeded(st, d.id, me), { toast: task.kind === 'supply' ? 'Flagged — ' + nm(BK.assignee(S, task).memberId) + ' will be notified.' : 'Flagged.' });
+  },
+  skip(d) {
+    const note = prompt('Why are you passing? (optional — they\u2019ll see this)') ;
+    if (note === null) return;
+    closeSheet();
+    mutate(st => { const r = BK.skip(st, d.id, me, note.trim()); return r.notes; }, { toast: 'Turn passed. A payback turn was recorded.' });
+  },
+  async nudge(d) {
+    const task = S.tasks.find(t => t.id === d.id), i = BK.info(S, task, T());
+    try { await BK.send(code, { to: i.assignee.memberId, title: task.emoji + ' Friendly nudge: ' + task.name, message: BK.memberName(S, me) + ' says: it\u2019s your turn (' + i.line.toLowerCase() + ').', tags: 'wave' }, appUrl()); toast('Nudge sent.'); }
+    catch (e) { toast('Couldn\u2019t send — check your internet.'); }
+  },
+  edit(d) { sheetEdit(d.id); },
+  'e-redraw'() { setTimeout(() => { pullDraft(); renderEdit(); }, 0); },
+  'e-cur'(d) { pullDraft(); draft.ptr = +d.i; renderEdit(); },
+  'e-up'(d) { pullDraft(); const k = +d.i; if (k > 0) { const r = draft.rotation, cur = r[draft.ptr]; [r[k - 1], r[k]] = [r[k], r[k - 1]]; draft.ptr = r.indexOf(cur); } renderEdit(); },
+  'e-down'(d) { pullDraft(); const k = +d.i, r = draft.rotation; if (k < r.length - 1) { const cur = r[draft.ptr]; [r[k + 1], r[k]] = [r[k], r[k + 1]]; draft.ptr = r.indexOf(cur); } renderEdit(); },
+  'e-rm'(d) { pullDraft(); const r = draft.rotation, cur = r[draft.ptr]; r.splice(+d.i, 1); draft.ptr = Math.max(0, r.indexOf(cur)); if (draft.ptr >= r.length) draft.ptr = 0; renderEdit(); },
+  'e-add'(d) { pullDraft(); draft.rotation.push(d.id); renderEdit(); },
+  'e-save'() { saveDraft(); },
+  'e-delete'() {
+    if (!confirm('Delete "' + draft.name + '"? Its history stays in the log.')) return;
+    const id = draft.id; closeSheet();
+    mutate(st => { st.tasks = st.tasks.filter(t => t.id !== id); st.ious = (st.ious || []).filter(x => x.taskId !== id); return []; }, { toast: 'Task deleted.' });
+  },
+  member(d) { sheetMember(d.id); },
+  'm-save'(d) {
+    const name = $('#m-name').value.trim(); if (!name) return toast('Enter a name.');
+    const color = (document.querySelector('input[name="m-color"]:checked') || {}).value || COLORS[0];
+    if (d.id) {
+      const away = $('#m-away').checked; closeSheet();
+      mutate(st => { const m = st.members.find(x => x.id === d.id); m.name = name; m.color = color; m.active = !away; return []; }, { toast: 'Saved.' });
+    } else {
+      const all = $('#m-addall').checked, id = BK.uid(); closeSheet();
+      mutate(st => { st.members.push({ id, name, color, active: true }); if (all) st.tasks.forEach(t => t.rotation.push(id)); return []; }, { toast: name + ' added.' });
+    }
+  },
+  'm-remove'(d) {
+    if (d.id === me) return toast('You can\u2019t remove yourself here — switch phones or have a roommate do it.');
+    if (!confirm('Remove ' + BK.memberName(S, d.id) + ' from the house? Their history stays in the log.')) return;
+    closeSheet();
+    mutate(st => {
+      st.members = st.members.filter(m => m.id !== d.id);
+      st.tasks.forEach(t => { const cur = t.rotation[t.ptr]; t.rotation = t.rotation.filter(x => x !== d.id); t.ptr = Math.max(0, t.rotation.indexOf(cur)); if (t.override && (t.override.memberId === d.id || t.override.onBehalfOf === d.id)) t.override = null; });
+      st.ious = (st.ious || []).filter(x => x.debtor !== d.id && x.creditor !== d.id);
+      return [];
+    }, { toast: 'Removed.' });
+  },
+  async copy(d) { try { await navigator.clipboard.writeText(d.v); toast('Copied.'); } catch (e) { prompt('Copy this:', d.v); } },
+  async share() {
+    const text = 'Join Room B on B-kini Bottom.\n1) Open ' + appUrl() + ' in Safari\n2) Share \u2192 Add to Home Screen\n3) Open it and tap "Join with a house code":\n' + code;
+    if (navigator.share) { try { await navigator.share({ text }); } catch (e) {} } else A.copy({ v: text });
+  },
+  async test() {
+    try { await BK.send(code, { to: me, title: '🫧 Test from B-kini Bottom', message: 'Notifications are working on this phone.', tags: 'tada' }, appUrl()); toast('Sent. It should arrive in a few seconds.'); }
+    catch (e) { toast('Couldn\u2019t send — check your internet.'); }
+  },
+  savehouse() {
+    const name = $('#hname').value.trim() || 'Room B', tz = $('#htz').value.trim() || 'Asia/Manila';
+    try { BK.today(tz); } catch (e) { return toast('Unknown time zone. Try something like Asia/Manila.'); }
+    mutate(st => { st.house.name = name; st.house.tz = tz; return []; }, { toast: 'Settings saved.' });
+  },
+  async export() {
+    const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+    const file = new File([blob], 'bkini-bottom-backup-' + T() + '.json', { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); } catch (e) {} return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
+  },
+  leave() { leave(false); },
+  async wipe() {
+    const ok = prompt('This permanently deletes the house, every task and all history for everyone. Type DELETE to confirm.');
+    if (ok !== 'DELETE') return;
+    if (mode === 'demo') { LS.del('bk.demo'); } else { try { await ref.delete(); } catch (e) { return toast('Couldn\u2019t delete: ' + e.message); } }
+    leave(true); toast('House deleted.');
+  },
+  iam(d) { me = d.id; LS.set('bk.me', me); render(); },
+  ob(d) {
+    if (d.v === 'demo') { onboarding = { step: 'create', demo: true, name: 'Room B', people: ['', '', ''], starters: BK.STARTERS.map((_, i) => i < 5) }; }
+    else if (d.v === 'create') onboarding = { step: 'create', name: 'Room B', people: ['', '', ''], starters: BK.STARTERS.map((_, i) => i < 5) };
+    else onboarding = { step: d.v };
+    renderWelcome();
+  },
+  'ob-add'() { pullOnboarding(); onboarding.people.push(''); renderWelcome(); const ins = document.querySelectorAll('.ob-p'); ins[ins.length - 1].focus(); },
+  'ob-del'(d) { pullOnboarding(); onboarding.people.splice(+d.i, 1); renderWelcome(); },
+  'ob-create'() { createHouse(); },
+  'ob-join'() { joinHouse(); }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const fn = A[el.dataset.act]; if (!fn) return;
+  if (el.dataset.act === 'backdrop') return fn(el.dataset, el, e);
+  if (el.tagName !== 'INPUT') e.preventDefault();
+  fn(el.dataset, el, e);
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'whoami') { me = e.target.value; LS.set('bk.me', me); render(); toast('This phone now belongs to ' + BK.memberName(S, me) + '.'); }
+  if (e.target.id === 'd-by' || e.target.name === 'm-color') {
+    if (e.target.name === 'm-color') document.querySelectorAll('input[name="m-color"]').forEach(i => { i.nextElementSibling.textContent = i.checked ? '✓' : ''; });
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#sheet-root').innerHTML) closeSheet(); });
+// refresh "today" when the app comes back to the foreground (dates roll over at midnight)
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S) { housekept = false; afterLoad(); } });
+
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude|claudeusercontent/.test(location.hostname)) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+if (code || mode === 'demo') connect(); else render();
+})();
+</script>
+</body>
+</html>
