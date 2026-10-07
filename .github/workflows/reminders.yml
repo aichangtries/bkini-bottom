@@ -1,0 +1,19 @@
+name: Daily reminders
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 01:00 UTC = 9:00 AM Philippine time. GitHub may run it a few minutes late.
+  workflow_dispatch:       # lets you press "Run workflow" to test it
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/remind.js
+        env:
+          HOUSE_CODE: ${{ secrets.HOUSE_CODE }}
+          APP_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
