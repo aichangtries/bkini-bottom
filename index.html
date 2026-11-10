@@ -190,6 +190,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--lagoon); outline
 .ac.on .ac-btn { background: #F2FBFF; color: #0F5E78; }
 .ac.lvl-over.on .ac-btn { background: #FFF4F1; color: #C23B28; }
 .ac-add { width: 100%; margin: 0 0 12px; }
+.ac-link { display: block; width: 100%; margin-top: 6px; min-height: 40px; background: none; border: 0; color: var(--ac-sub); font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 6px; }
+.hint { font-size: 14px; color: var(--lagoon); font-weight: 600; min-height: 20px; margin-top: 4px; }
 .sess { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
 .sess:last-child { border-bottom: 0; }
 .sess .tx { flex: 1; font-variant-numeric: tabular-nums; }
@@ -468,7 +471,9 @@ function timerCard(tm) {
     '<div class="ac-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(b.pct) + '"><span data-tk="bar" style="width:' + b.pct + '%"></span></div>' +
     '<div class="ac-line" data-tk="line">' + esc(b.line) + '</div>' +
     (eta ? '<div class="ac-line" style="margin-top:2px">' + esc(eta) + '</div>' : '') +
-    '<button class="ac-btn" data-act="t-toggle" data-id="' + tm.id + '" data-on="' + (i.running ? 1 : 0) + '">' + (i.running ? 'Turn off' : 'Turn on') + '</button></section>';
+    '<button class="ac-btn" data-act="t-toggle" data-id="' + tm.id + '" data-on="' + (i.running ? 1 : 0) + '">' + (i.running ? 'Turn off' : 'Turn on') + '</button>' +
+    (i.running ? '<button class="ac-link" data-act="t-open" data-id="' + tm.id + '">Started earlier? Fix the start time</button>'
+               : '<button class="ac-link" data-act="t-log" data-id="' + tm.id + '">Forgot to tap? Log it</button>') + '</section>';
 }
 // live clock: update the numbers once a second without re-rendering buttons
 setInterval(() => {
@@ -497,7 +502,7 @@ function sheetTimer(id) {
     h += '<label class="f">It actually started at<input type="datetime-local" id="t-start" value="' + BK.inputFromTs(tm.running.start, tz) + '" max="' + nowIn + '"></label><button class="btn small alt" data-act="t-fixstart" data-id="' + id + '">Save start time</button>' +
       '<label class="f" style="margin-top:16px">Turned it off earlier? Off at<input type="datetime-local" id="t-end" value="' + nowIn + '" max="' + nowIn + '"></label><button class="btn small alt" data-act="t-stopat" data-id="' + id + '">Turn off at this time</button>';
   } else {
-    h += '<label class="f">Forgot to tap Turn on? It started at<input type="datetime-local" id="t-start" value="' + BK.inputFromTs(now - 30 * BK.MIN, tz) + '" max="' + nowIn + '"></label><button class="btn small alt" data-act="t-startat" data-id="' + id + '">Turn on from this time</button>';
+    h += '<p class="note" style="margin-top:0">Forgot to tap Turn on or Turn off? Log it by clock time or by how long it ran.</p><button class="btn small alt" style="margin-top:8px" data-act="t-log" data-id="' + id + '">Log time I forgot to tap</button>';
   }
   h += '<div style="margin-top:14px"><button class="btn small ghost" data-act="t-sess" data-tid="' + id + '">Add a past session</button></div></div>';
 
@@ -520,6 +525,74 @@ function sheetTimer(id) {
   h += '<button class="btn block ghost" data-act="t-edit" data-id="' + id + '">Edit timer settings</button>';
   openSheet(h);
 }
+// "Forgot to tap" logger: by clock time or by how long, while still on or after it's off
+let LD = null;
+function pastTime(hhmm) { // most recent past moment with this clock time (today, else yesterday)
+  const tz = TZ(), now = Date.now(); if (!hhmm) return null;
+  let ts = BK.localToTs(T(), hhmm, tz);
+  if (ts > now + 60000) ts = BK.localToTs(BK.addDays(T(), -1), hhmm, tz);
+  return ts;
+}
+function whenText(ts) { return clock(ts) + ' ' + dayLabel(ts); }
+function sheetLog(id) {
+  const tm = S.timers.find(t => t.id === id); if (!tm) return closeSheet();
+  if (!LD || LD.id !== id) LD = { id, state: tm.running ? 'off' : 'on', how: 'ago', at: '', agoH: 1, agoM: 0, onAt: '', endHow: 'dur', durH: 1, durM: 0, offAt: '', by: me };
+  if (tm.running) LD.state = 'off';
+  const r = (name, val, label, cur, dis) => '<label' + (dis ? ' style="opacity:.45"' : '') + '><input type="radio" name="' + name + '" value="' + val + '"' + (cur === val ? ' checked' : '') + (dis ? ' disabled' : '') + ' data-act="l-redraw">' + label + '</label>';
+  const chips = (target) => '<div class="chiprow">' + [[15, '15m'], [30, '30m'], [60, '1h'], [120, '2h'], [180, '3h'], [360, '6h']].map(c => '<button class="chip" data-act="l-chip" data-t="' + target + '" data-m="' + c[0] + '">' + c[1] + '</button>').join('') + '</div>';
+  const hm = (pre, H, M) => '<div class="inline"><label class="f">Hours<input type="number" id="' + pre + 'H" min="0" max="24" value="' + H + '" inputmode="numeric" data-in="1"></label><label class="f">Minutes<input type="number" id="' + pre + 'M" min="0" max="59" step="5" value="' + M + '" inputmode="numeric" data-in="1"></label></div>';
+  let h = sheetHead(esc('Log ' + tm.name.toLowerCase() + ' time'));
+  h += '<div class="seg" role="radiogroup" aria-label="Is it still on?">' + r('l-state', 'on', 'It’s on now', LD.state, !!tm.running) + r('l-state', 'off', 'It’s already off', LD.state) + '</div>';
+  if (tm.running) h += '<p class="note">It’s already running, so you can only log an earlier session here. To change when this one started, use "Fix the start time".</p>';
+  if (LD.state === 'on') {
+    h += '<div class="panel"><h3>When did it go on?</h3><div class="seg" role="radiogroup" aria-label="Enter as">' + r('l-how', 'ago', 'It’s been on for', LD.how) + r('l-how', 'at', 'It started at', LD.how) + '</div>';
+    if (LD.how === 'ago') h += chips('ago') + hm('l-ago', LD.agoH, LD.agoM);
+    else h += '<label class="f">Clock time<input type="time" id="l-at" value="' + esc(LD.at) + '" data-in="1"></label>';
+    h += '<div class="hint" id="l-hint"></div></div>';
+  } else {
+    h += '<div class="panel"><h3>When did it go on?</h3><label class="f">Clock time<input type="time" id="l-onat" value="' + esc(LD.onAt) + '" data-in="1"></label>' +
+      '<h3 style="margin-top:14px">And off?</h3><div class="seg" role="radiogroup" aria-label="Enter as">' + r('l-endhow', 'dur', 'It ran for', LD.endHow) + r('l-endhow', 'at', 'Turned off at', LD.endHow) + '</div>';
+    if (LD.endHow === 'dur') h += chips('dur') + hm('l-dur', LD.durH, LD.durM);
+    else h += '<label class="f">Clock time<input type="time" id="l-offat" value="' + esc(LD.offAt) + '" data-in="1"></label>';
+    h += '<div class="hint" id="l-hint"></div></div>';
+  }
+  h += '<label class="f">Turned on by<select id="l-by">' + S.members.map(m => '<option value="' + m.id + '"' + (m.id === LD.by ? ' selected' : '') + '>' + esc(m.name) + '</option>').join('') + '</select></label>';
+  h += '<button class="btn block" style="margin-top:8px" data-act="l-save" data-id="' + id + '">' + (LD.state === 'on' ? 'Start the timer from then' : 'Log this session') + '</button>';
+  openSheet(h);
+  logHint();
+}
+function pullLog() {
+  if (!LD) return; const v = s => { const el = $(s); return el ? el.value : null; }, n = (s, d) => { const x = parseInt(v(s), 10); return isNaN(x) ? d : Math.max(0, x); };
+  const rd = nm => { const el = document.querySelector('input[name="' + nm + '"]:checked'); return el && el.value; };
+  LD.state = rd('l-state') || LD.state; LD.how = rd('l-how') || LD.how; LD.endHow = rd('l-endhow') || LD.endHow;
+  if ($('#l-agoH')) { LD.agoH = n('#l-agoH', 0); LD.agoM = n('#l-agoM', 0); }
+  if ($('#l-durH')) { LD.durH = n('#l-durH', 0); LD.durM = n('#l-durM', 0); }
+  if ($('#l-at')) LD.at = v('#l-at'); if ($('#l-onat')) LD.onAt = v('#l-onat'); if ($('#l-offat')) LD.offAt = v('#l-offat');
+  if ($('#l-by')) LD.by = v('#l-by');
+}
+// works out the actual start/end (or an error message) from what was entered
+function resolveLog() {
+  const now = Date.now();
+  if (LD.state === 'on') {
+    const start = LD.how === 'ago' ? now - (LD.agoH * 60 + LD.agoM) * BK.MIN : pastTime(LD.at);
+    if (!start) return { err: 'Enter when it went on.' };
+    if (now - start < BK.MIN) return { err: 'Enter how long it’s been on.' };
+    if (now - start > 24 * BK.HOUR) return { err: 'That’s more than 24 hours ago.' };
+    return { start, text: 'On since ' + whenText(start) + ' (' + BK.fmtDur(now - start) + ' so far)' };
+  }
+  const start = pastTime(LD.onAt);
+  if (!start) return { err: 'Enter when it went on.' };
+  let end;
+  if (LD.endHow === 'dur') end = start + (LD.durH * 60 + LD.durM) * BK.MIN;
+  else { if (!LD.offAt) return { err: 'Enter when it went off.' }; end = BK.localToTs(BK.dateAt(start, TZ()), LD.offAt, TZ()); if (end <= start) end += 24 * BK.HOUR; }
+  if (end - start < BK.MIN) return { err: 'Enter how long it ran.' };
+  if (end - start > 24 * BK.HOUR) return { err: 'A session can’t be longer than 24 hours.' };
+  if (end > now + 60000) return { err: 'That would end in the future. If it’s still on, choose "It’s on now".' };
+  return { start, end, text: whenText(start) + ' – ' + clock(end) + ' (' + BK.fmtDur(end - start) + ')' };
+}
+function logHint() { const el = $('#l-hint'); if (!el || !LD) return; pullLog(); const r = resolveLog(); el.textContent = r.err ? '' : r.text; }
+document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.in) logHint(); });
+
 function sheetSession(tid, sid) {
   const tm = S.timers.find(t => t.id === tid), x = sid ? tm.sessions.find(s => s.id === sid) : null, tz = TZ(), now = Date.now();
   const nowIn = BK.inputFromTs(now, tz);
@@ -939,6 +1012,29 @@ const A = {
     mutate(st => { BK.timerStart(st, d.id, me, now, ts); return []; }, { toast: 'Timer running from ' + clock(ts) + '.' });
   },
   't-sess'(d) { sheetSession(d.tid, d.sid); },
+  't-log'(d) { LD = null; sheetLog(d.id); },
+  'l-redraw'() { setTimeout(() => { pullLog(); sheetLog(LD.id); }, 0); },
+  'l-chip'(d) {
+    const m = +d.m, pre = d.t === 'ago' ? '#l-ago' : '#l-dur';
+    $(pre + 'H').value = Math.floor(m / 60); $(pre + 'M').value = m % 60; logHint();
+  },
+  'l-save'(d) {
+    pullLog(); const r = resolveLog(), by = LD.by, tm = S.timers.find(t => t.id === d.id), now = Date.now();
+    if (r.err) return toast(r.err);
+    if (LD.state === 'off' && tm.running && r.end > tm.running.start) return toast('That overlaps the session that\u2019s running now.');
+    const overlap = (tm.sessions || []).some(x => r.start < x.end && (r.end || now) > x.start);
+    if (overlap && !confirm('This overlaps a session that\u2019s already logged, so those minutes would count twice. Log it anyway?')) return;
+    closeSheet(); LD = null;
+    if (r.end) {
+      mutate(st => { const t = st.timers.find(x => x.id === d.id); t.sessions.push({ id: BK.uid(), start: r.start, end: r.end, by, endBy: by }); t.sessions.sort((p, q) => p.start - q.start); t.rev = (t.rev || 0) + 1;
+        BK.log(st, { timerId: d.id, date: BK.dateAt(r.end, TZ()), type: 'timer-off', by, mins: Math.round((r.end - r.start) / BK.MIN), note: 'logged later' }); return []; },
+        { toast: 'Logged ' + BK.fmtDur(r.end - r.start) + '.' });
+    } else {
+      let clash = false;
+      mutate(st => { if (st.timers.find(x => x.id === d.id).running) { clash = true; return []; } BK.timerStart(st, d.id, by, now, r.start); return []; },
+        { toast: 'Timer running from ' + clock(r.start) + '.' }).then(() => { if (clash) toast('Someone already turned it on.'); });
+    }
+  },
   't-sess-save'(d) {
     const tz = TZ(), a = BK.tsFromInput($('#s-start').value, tz), b = BK.tsFromInput($('#s-end').value, tz), by = $('#s-by').value, now = Date.now();
     if (!a || !b) return toast('Fill in both times.');

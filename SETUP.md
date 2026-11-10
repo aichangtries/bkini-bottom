@@ -115,7 +115,11 @@ Go to **Tasks → Usage limits → Add a timer** (or tap **Add an aircon timer**
   - *Resets daily* (default): the budget restarts at a set time each day. Pick a time it's usually off, like 12:00 noon, so a 10 PM–4 AM night counts as one day.
   - *Any 24 hours*: always looks back exactly 24 hours.
 - **Alerts go to the Whole-house alerts topic**, so everyone sees them: when there's 30 minutes left, when the limit is reached, and again 30 and 60 minutes over. These are scheduled on the ntfy server when the aircon is turned on, so they arrive even if every phone is closed, and they're cancelled when someone taps Turn off.
-- **Forgot to tap?** Tap the timer's name. You can set the real start time, turn it off at an earlier time, add a past session, or edit or delete any session.
+- **Forgot to tap?** Tap **Forgot to tap? Log it** under the button.
+  - *It's on now*: enter how long it's been on (e.g. 45m) or the clock time it started. The timer starts counting from then.
+  - *It's already off*: enter when it went on, then either how long it ran or when it went off. It's saved as a finished session without ever pressing Turn on.
+  - Clock times always mean the most recent one, so "10:00 PM" entered at 1 AM means last night.
+- **Started earlier than you tapped?** Tap **Fix the start time** while it's running. Tap the timer's name to turn it off at an earlier time, or edit or delete any session.
 - The timer's page shows the last 7 days and every session with who turned it on and off.
 
 ## Good to know
