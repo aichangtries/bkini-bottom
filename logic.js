@@ -253,6 +253,138 @@
     if (!r.ok) throw new Error('ntfy ' + r.status);
   }
 
+
+  // =====================================================================
+  //  Usage timers (e.g. the aircon): a daily time budget shared by everyone
+  // =====================================================================
+  const MIN = 60000, HOUR = 3600000;
+
+  function tzOffset(ts, tz) {
+    const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(ts));
+    const g = t => +p.find(x => x.type === t).value;
+    return Date.UTC(g('year'), g('month') - 1, g('day'), g('hour') % 24, g('minute'), g('second')) - Math.floor(ts / 1000) * 1000;
+  }
+  // 'YYYY-MM-DD' + 'HH:MM' in the house time zone -> timestamp
+  function localToTs(date, hhmm, tz) {
+    const [y, m, d] = date.split('-').map(Number), [h, mi] = (hhmm || '00:00').split(':').map(Number);
+    const guess = Date.UTC(y, m - 1, d, h, mi);
+    return guess - tzOffset(guess - tzOffset(guess, tz), tz);
+  }
+  function dateAt(ts, tz) { return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts)); }
+  function inputFromTs(ts, tz) { // for <input type="datetime-local">
+    const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date(ts));
+    const g = t => p.find(x => x.type === t).value;
+    return g('year') + '-' + g('month') + '-' + g('day') + 'T' + (g('hour') === '24' ? '00' : g('hour')) + ':' + g('minute');
+  }
+  function tsFromInput(v, tz) { if (!v) return null; const [d, t] = v.split('T'); return localToTs(d, t, tz); }
+
+  function fmtDur(ms) {
+    const neg = ms < 0; ms = Math.abs(ms);
+    const m = Math.floor(ms / MIN), h = Math.floor(m / 60), r = m % 60;
+    const s = h ? h + 'h' + (r ? ' ' + r + 'm' : '') : r + 'm';
+    return neg ? '-' + s : s;
+  }
+  function fmtClock(ms) { // 1:02:33
+    ms = Math.max(0, ms); const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+    return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  // When does the current budget window start, as seen at time `at`?
+  function windowStart(timer, at, tz) {
+    if (timer.window === 'rolling') return at - 24 * HOUR;
+    const d = dateAt(at, tz);
+    const b = localToTs(d, timer.resetTime || '12:00', tz);
+    return b <= at ? b : localToTs(addDays(d, -1), timer.resetTime || '12:00', tz);
+  }
+  function nextReset(timer, at, tz) {
+    if (timer.window === 'rolling') return null;
+    const d = dateAt(at, tz), b = localToTs(d, timer.resetTime || '12:00', tz);
+    return b > at ? b : localToTs(addDays(d, 1), timer.resetTime || '12:00', tz);
+  }
+  function usedBetween(timer, from, to) {
+    let u = 0;
+    const all = (timer.sessions || []).concat(timer.running ? [{ start: timer.running.start, end: to }] : []);
+    for (const x of all) { const a = Math.max(x.start, from), b = Math.min(x.end, to); if (b > a) u += b - a; }
+    return u;
+  }
+  function timerInfo(timer, now, tz) {
+    const ws = windowStart(timer, now, tz);
+    const used = usedBetween(timer, ws, now);
+    const limit = (timer.limitMin || 360) * MIN, warn = (timer.warnMin || 0) * MIN;
+    const left = limit - used;
+    const level = left <= 0 ? 'over' : (left <= warn ? 'low' : 'ok');
+    return { used, limit, left, level, warn, windowStart: ws, running: !!timer.running,
+      elapsed: timer.running ? now - timer.running.start : 0, resetAt: nextReset(timer, now, tz) };
+  }
+  // If it keeps running from `now`, when do we hit "warn" and "limit"? (minute steps, up to 26h ahead)
+  function timerEta(timer, now, tz) {
+    const limit = (timer.limitMin || 360) * MIN, warn = (timer.warnMin || 0) * MIN;
+    let warnAt = null, limitAt = null;
+    for (let t = now; t <= now + 26 * HOUR; t += MIN) {
+      const left = limit - usedBetween(timer, windowStart(timer, t, tz), t);
+      if (warnAt === null && warn > 0 && left <= warn) warnAt = t;
+      if (left <= 0) { limitAt = t; break; }
+    }
+    return { warnAt, limitAt };
+  }
+
+  function newTimer(partial) {
+    return Object.assign({ id: uid(), name: 'Aircon', emoji: '❄️', limitMin: 360, warnMin: 30,
+      window: 'reset', resetTime: '12:00', running: null, sessions: [], rev: 0 }, partial || {});
+  }
+  function pruneSessions(timer, now) { timer.sessions = (timer.sessions || []).filter(x => x.end > now - 62 * 24 * HOUR).slice(-600); }
+
+  function timerStart(state, id, by, now, startAt) {
+    const tm = state.timers.find(x => x.id === id);
+    if (!tm || tm.running) return false;
+    tm.running = { start: startAt || now, by }; tm.rev = (tm.rev || 0) + 1;
+    log(state, { timerId: id, date: dateAt(tm.running.start, state.house.tz), type: 'timer-on', by });
+    return true;
+  }
+  function timerStop(state, id, by, now, endAt) {
+    const tm = state.timers.find(x => x.id === id);
+    if (!tm || !tm.running) return null;
+    const end = Math.max(tm.running.start, Math.min(endAt || now, now));
+    const sess = { id: uid(), start: tm.running.start, end, by: tm.running.by, endBy: by };
+    if (end - sess.start >= 30000) tm.sessions.push(sess); // ignore accidental on/off taps
+    tm.running = null; tm.rev = (tm.rev || 0) + 1;
+    pruneSessions(tm, now);
+    log(state, { timerId: id, date: dateAt(end, state.house.tz), type: 'timer-off', by, mins: Math.round((end - sess.start) / MIN) });
+    return sess;
+  }
+
+  // ntfy scheduled alerts. They live on the ntfy server, so they arrive even if every phone is closed.
+  // Each has a sequence id derived from the timer's revision, so whoever stops the timer can cancel them.
+  function timerAlertIds(timer) {
+    if (!timer.running) return [];
+    const base = 'bk-' + timer.id + '-' + timer.running.start + '-' + (timer.rev || 0);
+    return ['w', 'l', 'o1', 'o2'].map(k => base + '-' + k);
+  }
+  function timerAlertPlan(state, timer, now) {
+    const tz = state.house.tz, out = [];
+    if (!timer.running) return out;
+    const ids = timerAlertIds(timer), e = timerEta(timer, now, tz), i = timerInfo(timer, now, tz);
+    const nm = timer.emoji + ' ' + timer.name, starter = memberName(state, timer.running.by);
+    const lim = fmtDur(i.limit);
+    if (e.warnAt && e.warnAt > now) out.push({ sid: ids[0], at: e.warnAt, to: 'all', title: nm + ': ' + fmtDur(timer.warnMin * MIN) + ' left today', message: 'It\'s been on since ' + starter + ' turned it on. Today\'s limit is ' + lim + '.', tags: 'hourglass_flowing_sand' });
+    if (e.limitAt) {
+      if (e.limitAt > now) out.push({ sid: ids[1], at: e.limitAt, to: 'all', title: nm + ': limit reached', message: 'That\'s ' + lim + ' for today. Please turn it off and tap Turn off in the app.', tags: 'stop_sign' });
+      [30, 60].forEach((m, k) => { const at = Math.max(now, e.limitAt) + m * MIN; out.push({ sid: ids[2 + k], at, to: 'all', title: nm + ' is still on: ' + m + 'm over the limit', message: 'If it\'s already off, tap Turn off in the app so the timer is right.', tags: 'warning' }); });
+    }
+    return out;
+  }
+  function sendAt(houseCode, n, clickUrl) {
+    // Simple POST with query params: no custom headers, so browsers don't need a CORS preflight.
+    const q = new URLSearchParams({ title: n.title, tags: n.tags || '' });
+    if (n.sid) q.set('sid', n.sid);
+    if (n.at && n.at - Date.now() > 15000) q.set('delay', String(Math.floor(n.at / 1000)));
+    if (clickUrl) q.set('click', clickUrl);
+    return fetch('https://ntfy.sh/' + topic(houseCode, n.to) + '?' + q, { method: 'POST', body: n.message || '' });
+  }
+  function cancelAlerts(houseCode, sids) {
+    return Promise.all(sids.map(sid => fetch('https://ntfy.sh/' + topic(houseCode, 'all') + '/' + encodeURIComponent(sid), { method: 'DELETE' }).catch(() => null)));
+  }
+
   // ---------- starters ----------
   const STARTERS = [
     { name: 'Clean the bathroom', emoji: '🚽', kind: 'chore', schedule: 'repeat', everyDays: 7, turnMode: 'each', alertAfterDays: 14, nagEveryDays: 2 },
@@ -279,5 +411,7 @@
   }
 
   return { today, addDays, diff, uid, spanText, member, memberName, activeRotation, slotMember, assignee, upcoming,
-    normalize, dueDate, info, complete, skip, markNeeded, reminders, topic, send, STARTERS, newTask, log };
+    normalize, dueDate, info, complete, skip, markNeeded, reminders, topic, send, STARTERS, newTask, log,
+    MIN, HOUR, localToTs, dateAt, inputFromTs, tsFromInput, fmtDur, fmtClock, windowStart, nextReset, usedBetween, timerInfo, timerEta,
+    newTimer, pruneSessions, timerStart, timerStop, timerAlertIds, timerAlertPlan, sendAt, cancelAlerts };
 });

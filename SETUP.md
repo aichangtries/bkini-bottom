@@ -106,6 +106,18 @@ Optional: in iPhone **Settings → Notifications → ntfy**, turn on **Time Sens
 
 ---
 
+## Aircon timer (usage limits)
+
+Go to **Tasks → Usage limits → Add a timer** (or tap **Add an aircon timer** on the Turns tab). Set the limit, e.g. 6 hours, and how early to warn, e.g. 30 minutes before.
+
+- **Turn on / Turn off.** Tap when you switch the aircon on and again when you switch it off, from anyone's phone. The time adds up across all sessions and counts down live on every phone.
+- **How the hours count.**
+  - *Resets daily* (default): the budget restarts at a set time each day. Pick a time it's usually off, like 12:00 noon, so a 10 PM–4 AM night counts as one day.
+  - *Any 24 hours*: always looks back exactly 24 hours.
+- **Alerts go to the Whole-house alerts topic**, so everyone sees them: when there's 30 minutes left, when the limit is reached, and again 30 and 60 minutes over. These are scheduled on the ntfy server when the aircon is turned on, so they arrive even if every phone is closed, and they're cancelled when someone taps Turn off.
+- **Forgot to tap?** Tap the timer's name. You can set the real start time, turn it off at an earlier time, add a past session, or edit or delete any session.
+- The timer's page shows the last 7 days and every session with who turned it on and off.
+
 ## Good to know
 
 - **Your data** lives only in your own Firebase project. House → **Export a backup** saves a copy; **Delete house and all data** removes it for everyone, permanently.

@@ -168,6 +168,34 @@ input:focus, select:focus, textarea:focus { border-color: var(--lagoon); outline
 
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(86px + env(safe-area-inset-bottom, 0px)); background: var(--deep); color: #fff; padding: 12px 16px; border-radius: 14px; z-index: 20; max-width: 90vw; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow); font-size: 15px; }
 .toast button { background: none; border: 0; color: var(--sun); font-weight: 700; cursor: pointer; }
+/* ---------- usage timers (aircon) ---------- */
+.ac { --ac-bg: #DDF1F7; --ac-ink: #12324A; --ac-sub: #3F5F70; --ac-bar: #138A92; background: var(--ac-bg); color: var(--ac-ink); border-radius: 22px; padding: 16px; margin: 0 0 12px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.ac.on { --ac-bg: #0F5E78; --ac-ink: #F2FBFF; --ac-sub: #BFE6F2; --ac-bar: #9BE7F2; }
+.ac.lvl-low { box-shadow: inset 0 0 0 3px var(--sun), var(--shadow); }
+.ac.lvl-low.on { --ac-bar: var(--sun); }
+.ac.lvl-over { --ac-bg: #FDE3DE; --ac-ink: #5A1A12; --ac-sub: #7A3A30; --ac-bar: #E0543F; }
+.ac.lvl-over.on { --ac-bg: #C23B28; --ac-ink: #FFF4F1; --ac-sub: #FFD6CE; --ac-bar: #FFD25E; }
+.ac.on::after { content: ""; position: absolute; right: -30px; top: -30px; width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%); pointer-events: none; }
+.ac-top { display: flex; align-items: center; gap: 8px; }
+.ac-name { background: none; border: 0; padding: 0; color: inherit; font-family: var(--display); font-weight: 600; font-size: 20px; cursor: pointer; text-align: left; }
+.ac-state { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--ac-sub); display: inline-flex; align-items: center; gap: 6px; }
+.ac.on .ac-state::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #7CF0B4; box-shadow: 0 0 0 3px rgba(124,240,180,.25); }
+.ac-big { font-family: var(--display); font-weight: 600; font-size: 40px; line-height: 1.05; margin: 10px 0 2px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.ac-big small { font-size: 18px; font-weight: 500; margin-left: 6px; color: var(--ac-sub); }
+.ac-meter { height: 10px; border-radius: 6px; background: rgba(18,50,74,.12); overflow: hidden; margin: 10px 0 8px; }
+.ac.on .ac-meter, .ac.lvl-over.on .ac-meter { background: rgba(255,255,255,.2); }
+.ac-meter span { display: block; height: 100%; background: var(--ac-bar); border-radius: 6px; transition: width .4s; }
+.ac-line { font-size: 14px; color: var(--ac-sub); font-variant-numeric: tabular-nums; }
+.ac-btn { margin-top: 14px; width: 100%; min-height: 52px; border-radius: 999px; border: 0; font-weight: 700; font-size: 17px; cursor: pointer; background: var(--lagoon); color: #fff; }
+.ac.on .ac-btn { background: #F2FBFF; color: #0F5E78; }
+.ac.lvl-over.on .ac-btn { background: #FFF4F1; color: #C23B28; }
+.ac-add { width: 100%; margin: 0 0 12px; }
+.sess { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.sess:last-child { border-bottom: 0; }
+.sess .tx { flex: 1; font-variant-numeric: tabular-nums; }
+.sess .tx small { display: block; color: var(--muted); }
+.bar .mark { position: relative; }
+input[type=datetime-local], input[type=time] { width: 100%; padding: 11px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--paper); min-height: 44px; font-size: 16px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 code.k { background: var(--foam); padding: 3px 7px; border-radius: 7px; font-size: 14px; word-break: break-all; }
 </style>
@@ -246,6 +274,7 @@ async function connect() {
 let housekept = false;
 function afterLoad() {
   if (!S) return render();
+  S.timers = S.timers || [];
   if (!housekept) {
     housekept = true;
     const copy = JSON.parse(JSON.stringify(S));
@@ -257,17 +286,23 @@ async function mutate(fn, opts) {
   opts = opts || {};
   if (!opts.silent) undoState = JSON.stringify(S);
   let notes = [];
+  let before = null, after = null;
   if (mode === 'demo') {
+    S.timers = S.timers || [];
     notes = fn(S) || []; LS.set('bk.demo', S); render();
   } else {
     try {
       await fs.runTransaction(async tx => {
         const snap = await tx.get(ref);
         const st = JSON.parse(snap.data().json);
+        st.timers = st.timers || [];
+        before = JSON.parse(snap.data().json);
         notes = fn(st) || [];
+        after = st;
         tx.set(ref, { json: JSON.stringify(st), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
       });
     } catch (e) { toast('Couldn\u2019t save — check your internet and try again.'); return null; }
+    if (before && after) syncTimerAlerts(before, after);
   }
   if (notes.length) notify(notes);
   if (opts.toast) toast(opts.toast, !opts.silent);
@@ -280,7 +315,32 @@ async function notify(notes) {
 function undo() {
   if (!undoState) return;
   const prev = JSON.parse(undoState); undoState = null;
-  mutate(st => { Object.keys(st).forEach(k => delete st[k]); Object.assign(st, prev); return []; }, { silent: true, toast: 'Undone.' });
+  mutate(st => {
+    const revs = {}; (st.timers || []).forEach(t => { revs[t.id] = t.rev || 0; });
+    Object.keys(st).forEach(k => delete st[k]); Object.assign(st, prev);
+    (st.timers || []).forEach(t => { t.rev = Math.max(t.rev || 0, revs[t.id] || 0) + 1; }); // fresh alert ids
+    return [];
+  }, { silent: true, toast: 'Undone.' });
+}
+// Aircon alerts are scheduled on the ntfy server so they arrive even when every phone is closed.
+// Whenever a timer's revision changes, cancel the old schedule and set up the new one.
+async function syncTimerAlerts(before, after) {
+  const now = Date.now();
+  const old = {}; (before.timers || []).forEach(t => { old[t.id] = t; });
+  for (const t of after.timers || []) {
+    const o = old[t.id];
+    const oldIds = o ? BK.timerAlertIds(o) : [], newIds = BK.timerAlertIds(t);
+    if (oldIds.join() === newIds.join()) continue;
+    if (oldIds.length) BK.cancelAlerts(code, oldIds);
+    if (!t.running) continue;
+    const i = BK.timerInfo(t, now, after.house.tz);
+    const justStarted = !(o && o.running);
+    if (justStarted && i.level === 'over') {
+      BK.sendAt(code, { to: 'all', title: t.emoji + ' ' + t.name + ' turned on while over the limit', message: BK.memberName(after, t.running.by) + ' turned it on. Today\u2019s ' + BK.fmtDur(i.limit) + ' is already used up (over by ' + BK.fmtDur(-i.left) + ').', tags: 'warning' }, appUrl()).catch(() => {});
+    }
+    for (const n of BK.timerAlertPlan(after, t, now)) BK.sendAt(code, n, appUrl()).catch(() => {});
+  }
+  for (const id in old) if (!(after.timers || []).some(t => t.id === id)) BK.cancelAlerts(code, BK.timerAlertIds(old[id]));
 }
 
 // ====================================================================
@@ -351,6 +411,8 @@ function viewHome() {
       : r.task.name + ' hasn\u2019t been done for ' + BK.spanText(r.i.sinceBase);
     h += '<button class="alarm" data-act="open" data-id="' + r.task.id + '"><span class="e" aria-hidden="true">' + esc(r.task.emoji) + '</span><span><b>' + esc(msg) + '</b>' + esc(nm(r.i.assignee.memberId)) + (r.i.assignee.memberId === me ? '\u2019re' : ' is') + ' up.</span></button>';
   });
+  if ((S.timers || []).length) h += '<div class="section-h" style="margin-top:6px"><h3>Usage today</h3></div>' + S.timers.map(tm => timerCard(tm)).join('');
+  else h += '<button class="btn alt ac-add" data-act="add-ac">\u2744\ufe0f Add an aircon timer</button>';
   h += '<div class="section-h"><h3>Your turns</h3></div>';
   if (mine.length) {
     h += '<div class="mine">' + mine.map(({ task, i }) =>
@@ -372,7 +434,128 @@ function viewHome() {
   return h;
 }
 
+// ---------- usage timers ----------
+const TZ = () => (S && S.house.tz) || 'Asia/Manila';
+const clock = ts => new Date(ts).toLocaleTimeString([], { timeZone: TZ(), hour: 'numeric', minute: '2-digit' });
+function dayLabel(ts) {
+  const d = BK.dateAt(ts, TZ()), n = BK.diff(T(), d);
+  if (n === 0) return 'today'; if (n === 1) return 'yesterday';
+  return new Date(d + 'T12:00:00').toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function timerBits(tm, now) {
+  const i = BK.timerInfo(tm, now, TZ());
+  const pct = Math.min(100, i.used / i.limit * 100);
+  let big;
+  if (i.level === 'over') big = (i.running ? BK.fmtClock(-i.left) : BK.fmtDur(-i.left)) + '<small>over the limit</small>';
+  else big = (i.running ? BK.fmtClock(i.left) : BK.fmtDur(i.left)) + '<small>left</small>';
+  let line = BK.fmtDur(i.used) + ' used of ' + BK.fmtDur(i.limit);
+  if (i.running) line += ' · on for ' + BK.fmtClock(i.elapsed);
+  return { i, pct, big, line };
+}
+function timerCard(tm) {
+  const now = Date.now(), b = timerBits(tm, now), i = b.i;
+  let state = i.running ? 'On since ' + clock(tm.running.start) + ' · ' + esc(nm(tm.running.by)) : 'Off';
+  let eta = '';
+  if (i.running && i.level !== 'over') {
+    const e = BK.timerEta(tm, now, TZ());
+    if (e.limitAt) eta = 'Limit reached around ' + clock(e.limitAt) + ' if left on.';
+  } else if (!i.running) {
+    eta = tm.window === 'rolling' ? 'Counts any 24 hours.' : 'Resets ' + (i.resetAt ? 'at ' + clock(i.resetAt) + ' ' + dayLabel(i.resetAt) : 'daily') + '.';
+  } else eta = 'Please turn it off.';
+  return '<section class="ac lvl-' + i.level + (i.running ? ' on' : '') + '" data-timer="' + tm.id + '" aria-label="' + esc(tm.name) + ' timer">' +
+    '<div class="ac-top"><button class="ac-name" data-act="t-open" data-id="' + tm.id + '">' + esc(tm.emoji + ' ' + tm.name) + '</button><span class="ac-state">' + state + '</span></div>' +
+    '<div class="ac-big" data-tk="big" aria-live="off">' + b.big + '</div>' +
+    '<div class="ac-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(b.pct) + '"><span data-tk="bar" style="width:' + b.pct + '%"></span></div>' +
+    '<div class="ac-line" data-tk="line">' + esc(b.line) + '</div>' +
+    (eta ? '<div class="ac-line" style="margin-top:2px">' + esc(eta) + '</div>' : '') +
+    '<button class="ac-btn" data-act="t-toggle" data-id="' + tm.id + '" data-on="' + (i.running ? 1 : 0) + '">' + (i.running ? 'Turn off' : 'Turn on') + '</button></section>';
+}
+// live clock: update the numbers once a second without re-rendering buttons
+setInterval(() => {
+  if (document.hidden || !S || !S.timers) return;
+  const now = Date.now();
+  document.querySelectorAll('[data-timer]').forEach(el => {
+    const tm = S.timers.find(t => t.id === el.dataset.timer); if (!tm) return;
+    const b = timerBits(tm, now);
+    const want = 'ac lvl-' + b.i.level + (b.i.running ? ' on' : '');
+    if (el.className !== want) { el.className = want; }
+    const g = k => el.querySelector('[data-tk="' + k + '"]');
+    if (g('big')) g('big').innerHTML = b.big;
+    if (g('line')) g('line').textContent = b.line;
+    if (g('bar')) g('bar').style.width = b.pct + '%';
+  });
+}, 1000);
+
+function sheetTimer(id) {
+  const tm = (S.timers || []).find(t => t.id === id); if (!tm) return closeSheet();
+  const now = Date.now(), tz = TZ(), nowIn = BK.inputFromTs(now, tz);
+  let h = sheetHead(esc(tm.emoji + ' ' + tm.name));
+  h += '<p class="note" style="margin-top:2px">Limit ' + BK.fmtDur(tm.limitMin * BK.MIN) + ' ' + (tm.window === 'rolling' ? 'in any 24 hours' : 'per day, resetting at ' + esc(clock(BK.localToTs(T(), tm.resetTime, tz)))) + '. Warns everyone with ' + BK.fmtDur(tm.warnMin * BK.MIN) + ' left.</p>';
+  h += timerCard(tm);
+  h += '<div class="panel"><h3>Fix the times</h3>';
+  if (tm.running) {
+    h += '<label class="f">It actually started at<input type="datetime-local" id="t-start" value="' + BK.inputFromTs(tm.running.start, tz) + '" max="' + nowIn + '"></label><button class="btn small alt" data-act="t-fixstart" data-id="' + id + '">Save start time</button>' +
+      '<label class="f" style="margin-top:16px">Turned it off earlier? Off at<input type="datetime-local" id="t-end" value="' + nowIn + '" max="' + nowIn + '"></label><button class="btn small alt" data-act="t-stopat" data-id="' + id + '">Turn off at this time</button>';
+  } else {
+    h += '<label class="f">Forgot to tap Turn on? It started at<input type="datetime-local" id="t-start" value="' + BK.inputFromTs(now - 30 * BK.MIN, tz) + '" max="' + nowIn + '"></label><button class="btn small alt" data-act="t-startat" data-id="' + id + '">Turn on from this time</button>';
+  }
+  h += '<div style="margin-top:14px"><button class="btn small ghost" data-act="t-sess" data-tid="' + id + '">Add a past session</button></div></div>';
+
+  // last 7 budget days
+  const ws = BK.windowStart(tm, now, tz), rows = [];
+  for (let k = 0; k < 7; k++) {
+    const from = tm.window === 'rolling' ? BK.localToTs(BK.addDays(T(), -k), '00:00', tz) : ws - k * 24 * BK.HOUR;
+    const to = Math.min(now, from + 24 * BK.HOUR);
+    rows.push({ from, used: BK.usedBetween(tm, from, to) });
+  }
+  const lim = tm.limitMin * BK.MIN, max = Math.max(lim, ...rows.map(r => r.used));
+  h += '<div class="panel"><h3>Last 7 days</h3><div class="bars">' + rows.map(r =>
+    '<div class="bar" style="grid-template-columns:86px 1fr 62px"><span>' + esc(dayLabel(r.from)) + '</span><span class="track" style="position:relative"><span class="fill" style="display:block;width:' + (r.used / max * 100) + '%;background:' + (r.used > lim ? 'var(--coral)' : 'var(--lagoon)') + '"></span><span aria-hidden="true" style="position:absolute;top:-2px;bottom:-2px;left:' + (lim / max * 100) + '%;width:2px;background:var(--ink);opacity:.5"></span></span><b style="text-align:right">' + BK.fmtDur(r.used) + '</b></div>').join('') +
+    '</div><p class="note">' + (tm.window === 'rolling' ? 'Calendar days, midnight to midnight.' : 'Each day runs from reset to reset.') + ' The line marks the limit.</p></div>';
+
+  const sess = (tm.sessions || []).filter(x => x.end > now - 7 * 24 * BK.HOUR).slice().reverse();
+  h += '<div class="panel"><h3>Sessions</h3>' + (sess.length ? sess.map(x =>
+    '<div class="sess">' + bub(x.by, 'sm') + '<div class="tx">' + esc(clock(x.start)) + ' – ' + esc(clock(x.end)) + ' · ' + BK.fmtDur(x.end - x.start) +
+    '<small>' + esc(dayLabel(x.start)) + ' · on: ' + esc(nm(x.by)) + (x.endBy && x.endBy !== x.by ? ', off: ' + esc(nm(x.endBy)) : '') + '</small></div><button class="btn small ghost" data-act="t-sess" data-tid="' + id + '" data-sid="' + x.id + '">Edit</button></div>').join('') : '<p class="note">No sessions in the last 7 days.</p>') + '</div>';
+  h += '<button class="btn block ghost" data-act="t-edit" data-id="' + id + '">Edit timer settings</button>';
+  openSheet(h);
+}
+function sheetSession(tid, sid) {
+  const tm = S.timers.find(t => t.id === tid), x = sid ? tm.sessions.find(s => s.id === sid) : null, tz = TZ(), now = Date.now();
+  const nowIn = BK.inputFromTs(now, tz);
+  let h = sheetHead(x ? 'Edit session' : 'Add a past session');
+  h += '<label class="f">Turned on<input type="datetime-local" id="s-start" value="' + BK.inputFromTs(x ? x.start : now - 2 * BK.HOUR, tz) + '" max="' + nowIn + '"></label>' +
+    '<label class="f">Turned off<input type="datetime-local" id="s-end" value="' + BK.inputFromTs(x ? x.end : now, tz) + '" max="' + nowIn + '"></label>' +
+    '<label class="f">Turned on by<select id="s-by">' + S.members.map(m => '<option value="' + m.id + '"' + (m.id === (x ? x.by : me) ? ' selected' : '') + '>' + esc(m.name) + '</option>').join('') + '</select></label>' +
+    '<div class="stack" style="margin-top:12px"><button class="btn block" data-act="t-sess-save" data-tid="' + tid + '" data-sid="' + (sid || '') + '">' + (x ? 'Save changes' : 'Add session') + '</button>' +
+    (x ? '<button class="btn block coral" data-act="t-sess-del" data-tid="' + tid + '" data-sid="' + sid + '">Delete session</button>' : '') +
+    '<button class="btn block ghost" data-act="t-open" data-id="' + tid + '">Back</button></div>';
+  openSheet(h);
+}
+function sheetTimerEdit(id) {
+  const tm = id ? S.timers.find(t => t.id === id) : BK.newTimer();
+  const rolling = tm.window === 'rolling';
+  let h = sheetHead(id ? 'Edit timer' : 'New usage timer');
+  h += '<div class="inline"><label class="f" style="flex:0 0 80px">Emoji<input type="text" id="x-emoji" value="' + esc(tm.emoji) + '" maxlength="4" style="text-align:center;font-size:22px"></label>' +
+    '<label class="f">Name<input type="text" id="x-name" value="' + esc(tm.name) + '" placeholder="e.g. Aircon"></label></div>' +
+    '<div class="inline"><label class="f">Limit (hours)<input type="number" id="x-limit" min="0.5" step="0.5" value="' + (tm.limitMin / 60) + '" inputmode="decimal"></label>' +
+    '<label class="f">Warn with (min) left<input type="number" id="x-warn" min="0" step="5" value="' + tm.warnMin + '" inputmode="numeric"></label></div>' +
+    '<div class="panel"><h3>How the hours count</h3><div class="seg" role="radiogroup" aria-label="Budget window"><label><input type="radio" name="x-win" value="reset"' + (!rolling ? ' checked' : '') + '>Resets daily</label><label><input type="radio" name="x-win" value="rolling"' + (rolling ? ' checked' : '') + '>Any 24 hours</label></div>' +
+    '<label class="f">Daily reset time<small>Pick a time it’s usually off, so a night like 10 PM–4 AM counts as one day. Noon works well.</small><input type="time" id="x-reset" value="' + esc(tm.resetTime || '12:00') + '"></label>' +
+    '<p class="note">"Any 24 hours" always looks back exactly 24 hours, so last night’s hours keep counting until the same time tonight.</p></div>' +
+    '<div class="stack" style="margin-top:12px"><button class="btn block" data-act="t-save" data-id="' + (id || '') + '">' + (id ? 'Save changes' : 'Add timer') + '</button>' +
+    (id ? '<button class="btn block coral" data-act="t-delete" data-id="' + id + '">Delete timer</button>' : '') + '</div>';
+  openSheet(h);
+}
+
 function logText(e) {
+  if (e.timerId) {
+    const tm = (S.timers || []).find(t => t.id === e.timerId), tn = tm ? tm.name.toLowerCase() : 'a timer';
+    const by = nm(e.by);
+    if (e.type === 'timer-on') return by + ' turned on the ' + tn;
+    if (e.type === 'timer-off') return by + ' turned off the ' + tn + (e.mins != null ? ' (' + BK.fmtDur(e.mins * BK.MIN) + ')' : '');
+    return by + ' fixed the ' + tn + ' times';
+  }
   const task = S.tasks.find(x => x.id === e.taskId);
   const tn = task ? task.name.charAt(0).toLowerCase() + task.name.slice(1) : 'a deleted task';
   const by = nm(e.by), f = e.forMember ? nm(e.forMember) : '';
@@ -410,14 +593,18 @@ function viewLog() {
   let lastDay = null, body = '';
   entries.slice(0, 300).forEach(e => {
     if (e.date !== lastDay) { if (lastDay) body += '</div>'; body += '<div class="day">' + esc(fmtDate(e.date)) + '</div><div class="list">'; lastDay = e.date; }
-    const task = S.tasks.find(x => x.id === e.taskId);
+    const task = S.tasks.find(x => x.id === e.taskId) || (S.timers || []).find(x => x.id === e.timerId);
     body += '<div class="ev"><span aria-hidden="true" style="font-size:22px">' + esc(task ? task.emoji : '•') + '</span><div class="tx">' + esc(logText(e)) + (e.note ? '<small>\u201c' + esc(e.note) + '\u201d</small>' : '') + '</div>' + bub(e.by, 'sm') + '</div>';
   });
   return h + body + '</div>';
 }
 
 function viewTasks() {
-  let h = '<div class="section-h" style="margin-top:4px"><h3>Tasks</h3><button class="btn small" data-act="edit">Add a task</button></div>';
+  let h = '<div class="section-h" style="margin-top:4px"><h3>Usage limits</h3><button class="btn small" data-act="t-edit">Add a timer</button></div>';
+  h += (S.timers || []).length ? '<div class="list">' + S.timers.map(tm => '<button class="item" data-act="t-edit" data-id="' + tm.id + '"><span class="e" aria-hidden="true">' + esc(tm.emoji) + '</span><span class="n">' + esc(tm.name) + '</span><span class="who"></span><span class="s">' +
+    esc(BK.fmtDur(tm.limitMin * BK.MIN) + (tm.window === 'rolling' ? ' in any 24 hours' : ' a day, resets at ' + clock(BK.localToTs(T(), tm.resetTime, TZ())))) + '</span></button>').join('') + '</div>'
+    : '<div class="clear"><b>No timers yet</b>Track shared things with a daily limit, like the aircon.</div>';
+  h += '<div class="section-h"><h3>Tasks</h3><button class="btn small" data-act="edit">Add a task</button></div>';
   if (!S.tasks.length) return h + '<div class="clear"><b>No tasks yet</b>Add chores like cleaning the bathroom, or supplies like trash bags.</div>';
   h += '<div class="list">' + S.tasks.map(task => {
     const sched = task.schedule === 'repeat' ? 'Every ' + BK.spanText(task.everyDays) : (task.kind === 'supply' ? 'When we run out' : 'When needed');
@@ -719,6 +906,78 @@ const A = {
     catch (e) { toast('Couldn\u2019t send — check your internet.'); }
   },
   edit(d) { sheetEdit(d.id); },
+  't-open'(d) { sheetTimer(d.id); },
+  't-edit'(d) { sheetTimerEdit(d.id); },
+  'add-ac'() { sheetTimerEdit(); },
+  't-toggle'(d, el) {
+    const wantOn = el.dataset.on !== '1', tm = S.timers.find(t => t.id === d.id), now = Date.now();
+    let clash = null;
+    mutate(st => {
+      const t = st.timers.find(x => x.id === d.id); if (!t) return [];
+      if (wantOn && t.running) { clash = 'Already on \u2014 ' + BK.memberName(st, t.running.by) + ' turned it on at ' + clock(t.running.start) + '.'; return []; }
+      if (!wantOn && !t.running) { clash = 'Already turned off.'; return []; }
+      if (wantOn) BK.timerStart(st, d.id, me, now); else BK.timerStop(st, d.id, me, now);
+      return [];
+    }, { toast: wantOn ? tm.name + ' on. Timer running.' : tm.name + ' off. Time saved.' }).then(() => { if (clash) toast(clash); if ($('#sheet-root .sheet [data-timer]')) sheetTimer(d.id); });
+  },
+  't-fixstart'(d) {
+    const ts = BK.tsFromInput($('#t-start').value, TZ()), now = Date.now();
+    if (!ts || ts > now) return toast('Pick a start time in the past.');
+    mutate(st => { const t = st.timers.find(x => x.id === d.id); if (!t.running) return []; t.running.start = ts; t.rev = (t.rev || 0) + 1; BK.log(st, { timerId: d.id, date: T(), type: 'timer-edit', by: me }); return []; }, { toast: 'Start time saved.' }).then(() => sheetTimer(d.id));
+  },
+  't-stopat'(d) {
+    const ts = BK.tsFromInput($('#t-end').value, TZ()), now = Date.now(), tm = S.timers.find(t => t.id === d.id);
+    if (!ts || ts > now + 60000) return toast('Pick a time that isn\u2019t in the future.');
+    if (tm.running && ts <= tm.running.start) return toast('That\u2019s before it was turned on.');
+    closeSheet();
+    mutate(st => { BK.timerStop(st, d.id, me, now, ts); return []; }, { toast: 'Turned off at ' + clock(ts) + '.' });
+  },
+  't-startat'(d) {
+    const ts = BK.tsFromInput($('#t-start').value, TZ()), now = Date.now();
+    if (!ts || ts > now) return toast('Pick a start time in the past.');
+    closeSheet();
+    mutate(st => { BK.timerStart(st, d.id, me, now, ts); return []; }, { toast: 'Timer running from ' + clock(ts) + '.' });
+  },
+  't-sess'(d) { sheetSession(d.tid, d.sid); },
+  't-sess-save'(d) {
+    const tz = TZ(), a = BK.tsFromInput($('#s-start').value, tz), b = BK.tsFromInput($('#s-end').value, tz), by = $('#s-by').value, now = Date.now();
+    if (!a || !b) return toast('Fill in both times.');
+    if (b <= a) return toast('"Turned off" has to be after "turned on".');
+    if (b > now + 60000) return toast('Times can\u2019t be in the future.');
+    mutate(st => {
+      const t = st.timers.find(x => x.id === d.tid);
+      if (d.sid) { const x = t.sessions.find(s => s.id === d.sid); if (x) { x.start = a; x.end = b; x.by = by; } }
+      else { t.sessions.push({ id: BK.uid(), start: a, end: b, by, endBy: by }); t.sessions.sort((p, q) => p.start - q.start); }
+      t.rev = (t.rev || 0) + 1; BK.log(st, { timerId: d.tid, date: T(), type: 'timer-edit', by: me });
+      return [];
+    }, { toast: d.sid ? 'Session updated.' : 'Session added.' }).then(() => sheetTimer(d.tid));
+  },
+  't-sess-del'(d) {
+    if (!confirm('Delete this session?')) return;
+    mutate(st => { const t = st.timers.find(x => x.id === d.tid); t.sessions = t.sessions.filter(s => s.id !== d.sid); t.rev = (t.rev || 0) + 1; BK.log(st, { timerId: d.tid, date: T(), type: 'timer-edit', by: me }); return []; }, { toast: 'Session deleted.' }).then(() => sheetTimer(d.tid));
+  },
+  't-save'(d) {
+    const name = $('#x-name').value.trim(), emoji = ($('#x-emoji').value || '').trim() || '\u23f1\ufe0f';
+    const hrs = parseFloat($('#x-limit').value), warn = Math.max(0, parseInt($('#x-warn').value, 10) || 0);
+    const win = (document.querySelector('input[name="x-win"]:checked') || {}).value || 'reset', reset = $('#x-reset').value || '12:00';
+    if (!name) return toast('Give the timer a name.');
+    if (!(hrs > 0) || hrs > 24) return toast('Set a limit between 0.5 and 24 hours.');
+    const limitMin = Math.round(hrs * 60);
+    if (warn >= limitMin) return toast('The warning has to be less than the limit.');
+    closeSheet();
+    mutate(st => {
+      const patch = { name, emoji, limitMin, warnMin: warn, window: win, resetTime: reset };
+      if (d.id) { const t = st.timers.find(x => x.id === d.id); Object.assign(t, patch); t.rev = (t.rev || 0) + 1; }
+      else st.timers.push(BK.newTimer(patch));
+      return [];
+    }, { toast: d.id ? 'Timer saved.' : name + ' timer added.' });
+  },
+  't-delete'(d) {
+    const tm = S.timers.find(t => t.id === d.id);
+    if (!confirm('Delete the ' + tm.name + ' timer and all its sessions?')) return;
+    closeSheet();
+    mutate(st => { st.timers = st.timers.filter(t => t.id !== d.id); return []; }, { toast: 'Timer deleted.' });
+  },
   'e-redraw'() { setTimeout(() => { pullDraft(); renderEdit(); }, 0); },
   'e-cur'(d) { pullDraft(); draft.ptr = +d.i; renderEdit(); },
   'e-up'(d) { pullDraft(); const k = +d.i; if (k > 0) { const r = draft.rotation, cur = r[draft.ptr]; [r[k - 1], r[k]] = [r[k], r[k - 1]]; draft.ptr = r.indexOf(cur); } renderEdit(); },
