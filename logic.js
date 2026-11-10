@@ -346,7 +346,7 @@
     if (!tm || !tm.running) return null;
     const end = Math.max(tm.running.start, Math.min(endAt || now, now));
     const sess = { id: uid(), start: tm.running.start, end, by: tm.running.by, endBy: by };
-    if (end - sess.start >= 30000) tm.sessions.push(sess); // ignore accidental on/off taps
+    if (end > sess.start) tm.sessions.push(sess); // every second counts (use Undo for an accidental tap)
     tm.running = null; tm.rev = (tm.rev || 0) + 1;
     pruneSessions(tm, now);
     log(state, { timerId: id, date: dateAt(end, state.house.tz), type: 'timer-off', by, mins: Math.round((end - sess.start) / MIN) });

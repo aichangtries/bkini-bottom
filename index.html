@@ -449,15 +449,17 @@ function timerBits(tm, now) {
   const i = BK.timerInfo(tm, now, TZ());
   const pct = Math.min(100, i.used / i.limit * 100);
   let big;
-  if (i.level === 'over') big = (i.running ? BK.fmtClock(-i.left) : BK.fmtDur(-i.left)) + '<small>over the limit</small>';
-  else big = (i.running ? BK.fmtClock(i.left) : BK.fmtDur(i.left)) + '<small>left</small>';
-  let line = BK.fmtDur(i.used) + ' used of ' + BK.fmtDur(i.limit);
-  if (i.running) line += ' · on for ' + BK.fmtClock(i.elapsed);
+  if (i.level === 'over') big = BK.fmtClock(-i.left) + '<small>over the limit</small>';
+  else big = BK.fmtClock(Math.ceil(i.left / 1000) * 1000) + '<small>left</small>'; // rounds up so used + left = limit exactly
+  let line = BK.fmtClock(i.used) + ' used of ' + BK.fmtDur(i.limit);
+  if (i.running) line += ' · this session ' + BK.fmtClock(i.elapsed);
   return { i, pct, big, line };
 }
 function timerCard(tm) {
   const now = Date.now(), b = timerBits(tm, now), i = b.i;
-  let state = i.running ? 'On since ' + clock(tm.running.start) + ' · ' + esc(nm(tm.running.by)) : 'Off';
+  const last = (tm.sessions || [])[(tm.sessions || []).length - 1];
+  let state = i.running ? 'On since ' + clock(tm.running.start) + ' · ' + esc(nm(tm.running.by))
+    : 'Off' + (last && now - last.end < 24 * BK.HOUR ? ' since ' + clock(last.end) + ' · ' + esc(nm(last.endBy || last.by)) : '');
   let eta = '';
   if (i.running && i.level !== 'over') {
     const e = BK.timerEta(tm, now, TZ());
@@ -476,7 +478,7 @@ function timerCard(tm) {
                : '<button class="ac-link" data-act="t-log" data-id="' + tm.id + '">Forgot to tap? Log it</button>') + '</section>';
 }
 // live clock: update the numbers once a second without re-rendering buttons
-setInterval(() => {
+function tick() {
   if (document.hidden || !S || !S.timers) return;
   const now = Date.now();
   document.querySelectorAll('[data-timer]').forEach(el => {
@@ -489,7 +491,8 @@ setInterval(() => {
     if (g('line')) g('line').textContent = b.line;
     if (g('bar')) g('bar').style.width = b.pct + '%';
   });
-}, 1000);
+}
+setInterval(tick, 1000);
 
 function sheetTimer(id) {
   const tm = (S.timers || []).find(t => t.id === id); if (!tm) return closeSheet();
@@ -1163,7 +1166,17 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#sheet-root').innerHTML) closeSheet(); });
 // refresh "today" when the app comes back to the foreground (dates roll over at midnight)
-document.addEventListener('visibilitychange', () => { if (!document.hidden && S) { housekept = false; afterLoad(); } });
+let lastResume = 0;
+function resume() {
+  if (document.hidden || Date.now() - lastResume < 1500) return;
+  lastResume = Date.now();
+  if (S) { housekept = false; afterLoad(); tick(); }
+  if (mode === 'cloud' && code && fs) connect(); // reconnect so other phones' changes show up right away
+}
+document.addEventListener('visibilitychange', resume);
+window.addEventListener('pageshow', resume);
+window.addEventListener('focus', resume);
+window.addEventListener('online', resume);
 
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude|claudeusercontent/.test(location.hostname)) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
